@@ -1,0 +1,16 @@
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .top-nav { display: none; }
+  .bottom-nav { display: flex; }
+  .main { padding: 20px 16px calc(var(--bottom-nav-h) + 16px); }
+  .page-header h2 { font-size: 22px; }
+  .entity-grid { grid-template-columns: 1fr; gap: 12px; }
+  .modal { border-radius: var(--radius) var(--radius) 0 0; }
+  .category-header { padding: 14px 16px; }
+  .item { padding: 12px 16px; }
+}
+
+@media (min-width: 601px) {
+  .modal-overlay { align-items: center; padding: 20px; }
+  .modal { border-radius: var(--radius); max-height: 80dvh; }
+}

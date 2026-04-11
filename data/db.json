@@ -1,0 +1,249 @@
+{
+  "entities": [
+    {
+      "id": "home",
+      "name": "Namai",
+      "emoji": "🏠",
+      "sections": []
+    },
+    {
+      "id": "car",
+      "name": "Automobilis",
+      "emoji": "🚗",
+      "sections": [
+        {
+          "id": "repairs",
+          "name": "Važiuoklė"
+        },
+        {
+          "id": "service",
+          "name": "Einamieji darbai"
+        },
+        {
+          "id": "comfort",
+          "name": "Salonas"
+        },
+        {
+          "id": "documents",
+          "name": "Dokumentai"
+        }
+      ]
+    },
+    {
+      "id": "investments",
+      "name": "Investicijos",
+      "emoji": "📈",
+      "sections": [
+        {
+          "id": "mnuorwp7oyj2",
+          "name": "Revolut"
+        },
+        {
+          "id": "mnuox74eg57k",
+          "name": "Trading212"
+        }
+      ]
+    },
+    {
+      "id": "mnukskysk88z",
+      "name": "Musė",
+      "emoji": "🐶",
+      "sections": [
+        {
+          "id": "mnukssri3m48",
+          "name": "Sveikata"
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "id": "i5",
+      "entityId": "car",
+      "sectionId": "documents",
+      "name": "Visi dokumentai kelionėm į užsienį",
+      "status": "ok",
+      "notes": "Atspausdinti draudimo lapai, žalias lapas, technikinė"
+    },
+    {
+      "id": "mnuktmj45usy",
+      "entityId": "mnukskysk88z",
+      "sectionId": "mnukssri3m48",
+      "name": "Dantų higiena",
+      "status": "urgent",
+      "notes": "Bloga situacija su dantimis"
+    },
+    {
+      "id": "mnuocsv67wu3",
+      "entityId": "car",
+      "sectionId": "comfort",
+      "name": "Girgžda vairuotojo sėdynė",
+      "status": "soon",
+      "notes": ""
+    },
+    {
+      "id": "mnuoeshpym43",
+      "entityId": "car",
+      "sectionId": "comfort",
+      "name": "Jungiant pavaras oda trinasi",
+      "status": "soon",
+      "notes": "Junginėjant pavaras odai besitrinant labai nemalonus garsas yra"
+    },
+    {
+      "id": "mnuopqngncqj",
+      "entityId": "car",
+      "sectionId": "documents",
+      "name": "Privalomasis draudimas",
+      "status": "ok",
+      "notes": "Galioja iki 2027-01-05 23:59"
+    },
+    {
+      "id": "mnuoq1awktfg",
+      "entityId": "car",
+      "sectionId": "documents",
+      "name": "Technikinė",
+      "status": "ok",
+      "notes": "Galioja iki XXXX-XX-XX XX:XX"
+    },
+    {
+      "id": "mnuosyrf5kn8",
+      "entityId": "investments",
+      "sectionId": "mnuorwp7oyj2",
+      "name": "Pagalvė (Indėlis, 3.05% metinė grąža)",
+      "status": "ok",
+      "notes": "Suma: 1590$ (Atnaujinta: 2026-04-11)"
+    },
+    {
+      "id": "mnuoyfikom1t",
+      "entityId": "investments",
+      "sectionId": "mnuox74eg57k",
+      "name": "Amerikietiškų akcijų paketas su dividendais",
+      "status": "ok",
+      "notes": "Suma: 166.20€ (Atnaujinta: 2026-04-11)"
+    },
+    {
+      "id": "mnup2cc5rgr8",
+      "entityId": "car",
+      "sectionId": "service",
+      "name": "Pasikeisti padangas į žiemines / vasarines",
+      "status": "urgent",
+      "notes": "Reikalingas padangų keitimas į vasarines, kad nedrožti žieminių"
+    },
+    {
+      "id": "i4",
+      "entityId": "car",
+      "sectionId": "service",
+      "name": "Tepalai",
+      "status": "ok",
+      "notes": "Keisti tepalai ties X km"
+    },
+    {
+      "id": "mnupa6pxen2v",
+      "entityId": "mnukskysk88z",
+      "sectionId": "mnukssri3m48",
+      "name": "Vakcinacija",
+      "status": "ok",
+      "notes": "Vakcinos galioja iki:\nNuo pasiutligės iki X\nNuo X iki X"
+    },
+    {
+      "id": "mnuoc2hgcs3i",
+      "entityId": "car",
+      "sectionId": "repairs",
+      "name": "Rūdys ant stogo",
+      "status": "urgent",
+      "notes": "Ant stogo atsirado rūdžių mažų, reikia neuždelsti"
+    },
+    {
+      "id": "mnuor3yup97g",
+      "entityId": "car",
+      "sectionId": "repairs",
+      "name": "Gazuojant keistas zvimbėjimas",
+      "status": "ok",
+      "notes": "Spaudžiant gazą girdisi keistas zvimbėjimas, ant laisvų apsukų geriausiai. Mechanikas testavo diržą nuėmęs, sakė ne, spėja, kad turbina, bet nieko nedarė."
+    },
+    {
+      "id": "mnumzosww5jg",
+      "entityId": "car",
+      "sectionId": "repairs",
+      "name": "Sankabos drebėjimas su pirmu bėgiu",
+      "status": "soon",
+      "notes": "Po sankabos ir smagračio pakeitimo. Mechanikai sako, kad viskas okay, bet neaišku"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "mnvano2tun8s",
+      "name": "Išvalyti Musei dantis",
+      "entityId": "mnukskysk88z",
+      "priority": null,
+      "done": false,
+      "assignedTo": "",
+      "dueDate": "2026-04-15",
+      "repeat": "custom",
+      "repeatEvery": 3,
+      "repeatFrequency": "days"
+    },
+    {
+      "id": "mnvafql6vef2",
+      "name": "Išvalyti Musei dantis",
+      "entityId": "mnukskysk88z",
+      "priority": null,
+      "done": true,
+      "assignedTo": "",
+      "dueDate": "2026-04-12",
+      "repeat": "custom",
+      "repeatEvery": 3,
+      "repeatFrequency": "days"
+    },
+    {
+      "id": "mnvafp2ovtbj",
+      "name": "Išgerti vitaminus",
+      "entityId": null,
+      "priority": null,
+      "done": false,
+      "assignedTo": "",
+      "dueDate": "2026-04-12",
+      "repeat": "daily"
+    },
+    {
+      "id": "mnus817l2296",
+      "name": "Išgerti vitaminus",
+      "entityId": null,
+      "priority": null,
+      "done": true,
+      "assignedTo": "",
+      "dueDate": "2026-04-11",
+      "repeat": "daily"
+    },
+    {
+      "id": "mnus817ftoe6",
+      "name": "Išvalyti Musei dantis",
+      "entityId": "mnukskysk88z",
+      "priority": null,
+      "done": true,
+      "assignedTo": "",
+      "dueDate": "2026-04-11",
+      "repeat": "daily"
+    },
+    {
+      "id": "mnupu840b5m7",
+      "name": "Suderinti vizitą dėl Musės higienos",
+      "entityId": "mnukskysk88z",
+      "priority": "high",
+      "done": false,
+      "assignedTo": "Domas",
+      "dueDate": "2026-04-13T15:00",
+      "repeat": null
+    },
+    {
+      "id": "mnupcncwnnc5",
+      "name": "Pasikeisti padangas į vasarines",
+      "entityId": "car",
+      "priority": null,
+      "done": false,
+      "assignedTo": "Domas",
+      "dueDate": "2026-05-01",
+      "repeat": null
+    }
+  ]
+}

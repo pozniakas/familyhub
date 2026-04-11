@@ -1,0 +1,151 @@
+/* ===== APP SHELL ===== */
+#app { min-height: 100dvh; display: flex; flex-direction: column; }
+
+/* ===== HEADER ===== */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--header-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.3px;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 7px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.refresh-btn:hover { color: var(--primary); border-color: var(--primary); }
+.refresh-btn.spinning {
+  animation: spin 0.7s linear infinite;
+  pointer-events: none;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.lang-toggle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 9px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+}
+.lang-toggle:hover { color: var(--primary); border-color: var(--primary); }
+
+.top-nav { display: flex; gap: 4px; }
+.top-nav-link {
+  padding: 6px 14px;
+  border-radius: var(--radius-xs);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+}
+.top-nav-link:hover { background: var(--bg); color: var(--text); }
+.top-nav-link.active { background: var(--primary-bg); color: var(--primary); }
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  flex: 1;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 20px calc(var(--bottom-nav-h) + 20px);
+}
+
+/* ===== BOTTOM NAV (mobile only) ===== */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--bottom-nav-h);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  transition: color 0.15s;
+  padding: 8px 0;
+}
+.bottom-nav-item.active { color: var(--primary); }
+.bottom-nav-item svg { transition: stroke 0.15s; }
+
+/* ===== PAGE HEADER ===== */
+.page-header {
+  margin-bottom: 28px;
+}
+.page-header h2 {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+}
+.page-header .subtitle {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+.page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ===== BACK BUTTON ===== */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+.back-btn:hover { color: var(--text); }

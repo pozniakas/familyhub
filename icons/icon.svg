@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Rounded purple background -->
+  <rect width="512" height="512" rx="112" fill="#6366f1"/>
+  <!-- House icon -->
+  <g fill="none" stroke="white" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Roof -->
+    <polyline points="100,252 256,116 412,252"/>
+    <!-- Left wall + base -->
+    <polyline points="148,228 148,404 364,404 364,228"/>
+    <!-- Door -->
+    <rect x="210" y="304" width="92" height="100" rx="6"/>
+  </g>
+</svg>

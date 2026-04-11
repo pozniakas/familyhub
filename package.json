@@ -1,0 +1,15 @@
+{
+  "name": "familyhub",
+  "version": "1.0.0",
+  "description": "Shared family dashboard",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "sharp": "^0.33.0"
+  }
+}

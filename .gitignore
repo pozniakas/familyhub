@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Data — contains your personal family data, keep it local
+data/db.json
+
+# Generated icons — rebuilt from icon.svg via `node icons/generate.mjs`
+icons/icon-180.png
+icons/icon-192.png
+icons/icon-512.png
+
+# macOS noise
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*

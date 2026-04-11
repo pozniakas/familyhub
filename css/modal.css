@@ -1,0 +1,308 @@
+/* ===== MODAL OVERLAY ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.15s ease;
+}
+.modal-overlay.hidden {
+  display: none;
+}
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+  animation: slideUp 0.2s ease;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+.modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+.modal-close:hover {
+  background: var(--border);
+}
+
+/* ===== FORMS ===== */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface);
+  transition: border-color 0.15s;
+  outline: none;
+}
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: var(--primary);
+}
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+.form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.status-options,
+.priority-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.status-option,
+.priority-option {
+  flex: 1;
+  min-width: 80px;
+}
+.status-option input,
+.priority-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.status-option label,
+.priority-option label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.status-option input:checked + label.ok-label,
+.status-option input:focus + label.ok-label {
+  background: var(--ok-bg);
+  border-color: var(--ok);
+  color: var(--ok);
+}
+.status-option input:checked + label.soon-label,
+.status-option input:focus + label.soon-label {
+  background: var(--soon-bg);
+  border-color: var(--soon);
+  color: var(--soon);
+}
+.status-option input:checked + label.urgent-label,
+.status-option input:focus + label.urgent-label {
+  background: var(--urgent-bg);
+  border-color: var(--urgent);
+  color: var(--urgent);
+}
+.priority-option input:checked + label.high-label {
+  background: var(--high-bg);
+  border-color: var(--high);
+  color: var(--high);
+}
+.priority-option input:checked + label.medium-label {
+  background: var(--medium-bg);
+  border-color: var(--medium);
+  color: var(--medium);
+}
+.priority-option input:checked + label.low-label {
+  background: var(--low-bg);
+  border-color: var(--low);
+  color: var(--low);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.form-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ===== DUE DATE PICKER ===== */
+.due-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.due-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.due-time-row,
+.due-repeat-row {
+  /* slide in when a date is selected */
+  animation: slideDown 0.15s ease;
+}
+.due-custom-fields {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+}
+.due-custom-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+.due-custom-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  padding-left: 2px;
+}
+.due-custom-number {
+  text-align: center;
+}
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.due-input-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.due-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.due-input-wrap .form-input {
+  padding-left: 36px;
+}
+/* Remove native calendar/clock icon on Webkit */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  opacity: 0.4;
+  cursor: pointer;
+}
+.due-clear-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  color: var(--text-tertiary);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.due-clear-btn:hover {
+  background: var(--urgent-bg);
+  color: var(--urgent);
+}
+
+/* ===== EMOJI PICKER ===== */
+.emoji-picker-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.emoji-preview {
+  font-size: 36px;
+  line-height: 1;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+}
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+.emoji-opt {
+  font-size: 22px;
+  padding: 6px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  text-align: center;
+  line-height: 1;
+  transition:
+    background 0.12s,
+    transform 0.1s;
+  border: 1.5px solid transparent;
+}
+.emoji-opt:hover {
+  background: var(--bg);
+  transform: scale(1.15);
+}
+.emoji-opt.selected {
+  background: var(--primary-bg);
+  border-color: var(--primary);
+}
