@@ -10,11 +10,13 @@ Built with **vanilla JavaScript ES modules** on the frontend and a minimal **Nod
 
 - **Tasks** (default view) — time-aware greeting + shared to-do list with filters, priority, assignee and due date. Lands first on open.
 - **Entities** — grid of all entities (Home, Car, Dog, etc.) with colour-coded status summaries. Each entity is organised into custom sections (e.g. Home → Maintenance, Appliances, Garden).
-- **Items** — track individual things within a section. Cycle through three statuses by tapping:
+- **Items** — track individual things within a section with three statuses:
   - 🟢 **All good**
   - 🟡 **Needs attention**
   - 🔴 **Urgent**
-- **Tasks** — shared to-do list with priority (low / medium / high), optional entity link, optional assignee, and optional due date (with time). Filter by to do / done / all.
+- **Tasks** — shared to-do list with optional priority (low / medium / high), optional entity link, optional assignee, and optional due date (with time). Filter by to do / done / all. Supports **recurring tasks** (daily, weekly, biweekly, monthly, every 3/6 months, yearly, or fully custom interval) — completing a recurring task marks it done and automatically creates the next occurrence.
+- **Drag-and-drop reordering** — sections and items within a section can be reordered by dragging; works on both desktop and mobile.
+- **Item detail view** — tapping an item opens a read-only detail modal showing the full name and notes, useful on small screens.
 - **Full CRUD** — add, edit, and delete entities, sections, items, and tasks through modals.
 - **i18n** — English / Lithuanian language toggle in the header; choice persisted in `localStorage`.
 - **PWA** — installable on iPhone/Android; service worker caches the app shell for offline use.
@@ -185,10 +187,13 @@ All data is stored in `data/db.json` as a single JSON object:
       "id": "<uid>",
       "name": "Book a roof inspector",
       "entityId": "home", // nullable
-      "priority": "high", // "low" | "medium" | "high"
+      "priority": "high", // "low" | "medium" | "high" | null (no priority)
       "done": false,
       "assignedTo": "",
-      "dueDate": null, // ISO date string or null
+      "dueDate": null, // "YYYY-MM-DD" | "YYYY-MM-DDTHH:MM" | null
+      "repeat": null, // "daily" | "weekly" | "biweekly" | "monthly" | "3months" | "6months" | "yearly" | "custom" | null
+      "repeatEvery": null, // number — used when repeat is "custom" (e.g. 3)
+      "repeatFrequency": null, // "days" | "weeks" | "months" | "years" — used when repeat is "custom"
     },
   ],
 }
@@ -202,24 +207,26 @@ The file is created automatically the first time data is written. You can seed i
 
 Base URL: `http://localhost:3000/api`
 
-| Method   | Endpoint                      | Description                                                         |
-| -------- | ----------------------------- | ------------------------------------------------------------------- |
-| `GET`    | `/data`                       | Load full snapshot (used on app startup)                            |
-| `GET`    | `/entities`                   | List all entities                                                   |
-| `POST`   | `/entities`                   | Create entity `{ name, emoji? }`                                    |
-| `PUT`    | `/entities/:id`               | Update entity                                                       |
-| `DELETE` | `/entities/:id`               | Delete entity + its items                                           |
-| `POST`   | `/entities/:id/sections`      | Add section `{ name }`                                              |
-| `PUT`    | `/entities/:id/sections/:sid` | Rename section                                                      |
-| `DELETE` | `/entities/:id/sections/:sid` | Delete section + its items                                          |
-| `GET`    | `/items`                      | List all items                                                      |
-| `POST`   | `/items`                      | Create item `{ entityId, sectionId, name, status?, notes? }`        |
-| `PUT`    | `/items/:id`                  | Update item fields                                                  |
-| `DELETE` | `/items/:id`                  | Delete item                                                         |
-| `GET`    | `/tasks`                      | List all tasks                                                      |
-| `POST`   | `/tasks`                      | Create task `{ name, entityId?, priority?, assignedTo?, dueDate? }` |
-| `PUT`    | `/tasks/:id`                  | Update task fields                                                  |
-| `DELETE` | `/tasks/:id`                  | Delete task                                                         |
+| Method   | Endpoint                         | Description                                                                                                  |
+| -------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `GET`    | `/data`                          | Load full snapshot (used on app startup)                                                                     |
+| `GET`    | `/entities`                      | List all entities                                                                                            |
+| `POST`   | `/entities`                      | Create entity `{ name, emoji? }`                                                                             |
+| `PUT`    | `/entities/:id`                  | Update entity                                                                                                |
+| `DELETE` | `/entities/:id`                  | Delete entity + its items                                                                                    |
+| `POST`   | `/entities/:id/sections`         | Add section `{ name }`                                                                                       |
+| `PUT`    | `/entities/:id/sections/:sid`    | Rename section                                                                                               |
+| `DELETE` | `/entities/:id/sections/:sid`    | Delete section + its items                                                                                   |
+| `PUT`    | `/entities/:id/sections/reorder` | Reorder sections `{ ids: [...] }`                                                                            |
+| `PUT`    | `/items/reorder`                 | Reorder items within a section `{ entityId, sectionId, ids: [...] }`                                         |
+| `GET`    | `/items`                         | List all items                                                                                               |
+| `POST`   | `/items`                         | Create item `{ entityId, sectionId, name, status?, notes? }`                                                 |
+| `PUT`    | `/items/:id`                     | Update item fields                                                                                           |
+| `DELETE` | `/items/:id`                     | Delete item                                                                                                  |
+| `GET`    | `/tasks`                         | List all tasks                                                                                               |
+| `POST`   | `/tasks`                         | Create task `{ name, entityId?, priority?, assignedTo?, dueDate?, repeat?, repeatEvery?, repeatFrequency? }` |
+| `PUT`    | `/tasks/:id`                     | Update task fields                                                                                           |
+| `DELETE` | `/tasks/:id`                     | Delete task                                                                                                  |
 
 All endpoints accept and return JSON.
 
@@ -252,9 +259,3 @@ Key design decisions:
 ## Customising the default data
 
 Edit `data/db.json` while the server is stopped, or modify the seed values exported from `js/data.js` (used as UI documentation / fallback). Add or rename entities and sections to match your household's needs.
-
----
-
-## License
-
-MIT
