@@ -2,23 +2,21 @@
 
 A lightweight, self-hosted family dashboard for tracking household items, managing shared tasks, and keeping everything organised in one place.
 
-Built with **vanilla JavaScript ES modules** on the frontend and a minimal **Node.js / Express** backend. No build step. No database — data lives in a single JSON file.
+Built with **vanilla JavaScript ES modules** on the frontend and a **Node.js / Express / TypeScript** backend backed by PostgreSQL.
 
 ---
 
 ## Features
 
-- **Tasks** (default view) — time-aware greeting + shared to-do list with filters, priority, assignee and due date. Lands first on open.
-- **Entities** — grid of all entities (Home, Car, Dog, etc.) with colour-coded status summaries. Each entity is organised into custom sections (e.g. Home → Maintenance, Appliances, Garden).
-- **Items** — track individual things within a section with three statuses:
-  - 🟢 **All good**
-  - 🟡 **Needs attention**
-  - 🔴 **Urgent**
-- **Tasks** — shared to-do list with optional priority (low / medium / high), optional entity link, optional assignee, and optional due date (with time). Filter by to do / done / all. Supports **recurring tasks** (daily, weekly, biweekly, monthly, every 3/6 months, yearly, or fully custom interval) — completing a recurring task marks it done and automatically creates the next occurrence.
-- **Drag-and-drop reordering** — sections and items within a section can be reordered by dragging; works on both desktop and mobile.
-- **Item detail view** — tapping an item opens a read-only detail modal showing the full name and notes, useful on small screens.
-- **Full CRUD** — add, edit, and delete entities, sections, items, and tasks through modals.
-- **i18n** — English / Lithuanian language toggle in the header; choice persisted in `localStorage`.
+- **Tasks** — shared to-do list with filters, priority, assignee, and due date. Time-aware greeting on open.
+- **Recurring tasks** — daily, weekly, biweekly, monthly, every 3/6 months, yearly, or fully custom interval. Completing a recurring task marks it done and automatically creates the next occurrence.
+- **Entities** — grid of household things (Home, Car, Dog, etc.) with colour-coded status summaries. Each entity has custom sections (e.g. Home → Maintenance, Appliances).
+- **Items** — track things within a section with three statuses: 🟢 All good · 🟡 Needs attention · 🔴 Urgent.
+- **User authentication** — JWT-based login with persistent sessions (stored in `localStorage`). All data routes require a valid token.
+- **Admin panel** — password-protected at `#/admin` (uses `ADMIN_PASSWORD` env var, cleared on page refresh). Create, delete, and change passwords for users.
+- **Push notifications** — users can subscribe their device via the 🔔 bell in the header. Admins can send test pushes per user from the admin panel. Works on desktop browsers, Android Chrome, and iOS Safari 16.4+ (PWA must be added to Home Screen on iOS).
+- **Drag-and-drop reordering** — sections and items reorder by drag on desktop and touch on mobile.
+- **i18n** — English / Lithuanian toggle in the header; persisted in `localStorage`.
 - **PWA** — installable on iPhone/Android; service worker caches the app shell for offline use.
 - **Responsive** — desktop top-nav, mobile bottom-nav.
 
@@ -26,14 +24,15 @@ Built with **vanilla JavaScript ES modules** on the frontend and a minimal **Nod
 
 ## Tech stack
 
-| Layer       | Technology                                                       |
-| ----------- | ---------------------------------------------------------------- |
-| Frontend    | Vanilla JS (ES modules), HTML5, CSS3                             |
-| Backend     | Node.js 20, Express 4, TypeScript                                |
-| ORM         | TypeORM 0.3 (migrations, typed entities)                         |
-| Database    | PostgreSQL 16                                                    |
-| Containers  | Docker + Docker Compose                                          |
-| Routing     | Hash-based client-side SPA (`#/`, `#/entities`, `#/entity/:id`) |
+| Layer       | Technology                                                                         |
+| ----------- | ---------------------------------------------------------------------------------- |
+| Frontend    | Vanilla JS (ES modules), HTML5, CSS3                                               |
+| Backend     | Node.js 20, Express 4, TypeScript                                                  |
+| Auth        | JWT (jsonwebtoken), bcrypt, Web Push (web-push + VAPID)                            |
+| ORM         | TypeORM 0.3 (migrations, typed entities)                                           |
+| Database    | PostgreSQL 16                                                                      |
+| Containers  | Docker + Docker Compose                                                            |
+| Routing     | Hash-based client-side SPA (`#/`, `#/entities`, `#/entity/:id`, `#/admin`)        |
 
 Zero frontend dependencies.
 
@@ -43,18 +42,17 @@ Zero frontend dependencies.
 
 ```
 ├── index.html              # App shell (single HTML file)
-├── manifest.json           # PWA manifest (name, icons, display mode)
-├── sw.js                   # Service worker (cache-first for assets, network-first for API)
+├── manifest.json           # PWA manifest
+├── sw.js                   # Service worker (cache-first assets, network-first API, push handler)
 ├── Dockerfile              # Multi-stage build (builder → production)
 ├── docker-compose.yml      # PostgreSQL + app containers
 ├── .env.example            # Environment variable template
-├── .gitignore
 ├── package.json
 ├── icons/
 │   ├── icon.svg            # Source icon
-│   ├── icon-180.png        # Apple touch icon (generated)
-│   ├── icon-192.png        # Android / Chrome PWA icon (generated)
-│   ├── icon-512.png        # Android splash icon (generated)
+│   ├── icon-180.png        # Apple touch icon
+│   ├── icon-192.png        # Android / Chrome PWA icon
+│   ├── icon-512.png        # Android splash icon
 │   └── generate.mjs        # One-time script to (re)generate PNG icons
 ├── css/
 │   ├── base.css            # CSS variables, reset
@@ -62,21 +60,26 @@ Zero frontend dependencies.
 │   ├── components.css      # Cards, badges, buttons
 │   ├── tasks.css           # Task list styles
 │   ├── modal.css           # Modal overlay
-│   └── responsive.css      # Mobile breakpoints
+│   ├── responsive.css      # Mobile breakpoints
+│   └── auth.css            # Login screen, admin page, push/logout buttons
 ├── js/
-│   ├── main.js             # Entry point — bootstraps the app
+│   ├── main.js             # Entry point — bootstraps app, wires auth + push + nav
 │   ├── state.js            # In-memory state store
 │   ├── api.js              # Fetch wrapper for all REST calls
-│   ├── render.js           # Route → view dispatcher
+│   ├── auth.js             # JWT token helpers (localStorage)
+│   ├── push.js             # Web Push subscribe/unsubscribe helpers
+│   ├── render.js           # Route → view dispatcher (auth-aware)
 │   ├── router.js           # Hash URL parser
 │   ├── events.js           # Delegated click & change handlers
 │   ├── modal.js            # Modal open/close logic
-│   ├── helpers.js          # Escape, greetingKey utils
+│   ├── helpers.js          # esc(), greetingKey() utils
 │   ├── i18n.js             # EN/LT translations + t() helper
 │   ├── labels.js           # Status/priority labels & CSS classes
 │   ├── data.js             # Default seed data
 │   ├── views/
-│   │   ├── dashboard.js    # Entities view renderer (entity grid + status cards)
+│   │   ├── login.js        # Login screen renderer
+│   │   ├── admin.js        # Admin panel renderer + event wiring
+│   │   ├── dashboard.js    # Entities view renderer
 │   │   ├── entity.js       # Entity detail page renderer
 │   │   └── tasks.js        # Tasks page renderer
 │   └── modals/
@@ -84,48 +87,79 @@ Zero frontend dependencies.
 │       ├── items.js        # Add/edit item modals
 │       └── tasks.js        # Add/edit task modals
 └── server/
-    ├── tsconfig.json       # TypeScript config for the server (compiled → dist/)
+    ├── tsconfig.json
     └── src/
-        ├── index.ts        # Express app setup, startup, migration runner
-        ├── data-source.ts  # TypeORM DataSource (connection + entity/migration list)
-        ├── utils.ts        # uid() — crypto.randomUUID() wrapper
+        ├── index.ts        # Express app setup, VAPID config, startup
+        ├── data-source.ts  # TypeORM DataSource
+        ├── utils.ts        # uid() helper
         ├── entity/
-        │   ├── FamilyEntity.ts  # entities table
-        │   ├── Section.ts       # sections table (sort_order, FK → entities)
-        │   ├── Item.ts          # items table (sort_order)
-        │   └── Task.ts          # tasks table (created_at for ordering)
+        │   ├── FamilyEntity.ts
+        │   ├── Section.ts
+        │   ├── Item.ts
+        │   ├── Task.ts
+        │   ├── User.ts              # users table (username, bcrypt hash)
+        │   └── PushSubscription.ts  # push_subscriptions table (per-device, FK → users)
         ├── migrations/
-        │   └── 1744408800000-InitialSchema.ts  # creates all four tables
+        │   ├── 1744408800000-InitialSchema.ts
+        │   ├── 1744408800001-AddUsers.ts
+        │   └── 1744408800002-AddPushSubscriptions.ts
+        ├── middleware/
+        │   └── auth.ts     # authMiddleware (JWT), adminMiddleware (header password)
         └── routes/
-            ├── entities.ts # /api/entities (+ /sections sub-resource)
-            ├── items.ts    # /api/items
-            └── tasks.ts    # /api/tasks
+            ├── auth.ts     # POST /api/auth/login, /api/auth/admin-login
+            ├── admin.ts    # /api/admin/users (CRUD) + /api/admin/push-test/:id
+            ├── push.ts     # /api/push/subscribe, /api/push/vapid-public-key
+            ├── entities.ts
+            ├── items.ts
+            └── tasks.ts
 ```
 
 ---
 
 ## Getting started
 
-### Option A — Docker (recommended)
-
-The simplest way. Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+### 1. Environment file
 
 ```bash
-git clone <your-repo-url>
-cd Family
-
-# 1. Create your environment file
 cp .env.example .env
-#    Edit .env and set a real DB_PASSWORD
+```
 
-# 2. Start everything (builds the image, starts postgres + app)
+Open `.env` and fill in:
+
+| Variable           | Description                                                          |
+| ------------------ | -------------------------------------------------------------------- |
+| `DB_PASSWORD`      | PostgreSQL password                                                  |
+| `JWT_SECRET`       | Long random string for signing JWTs                                  |
+| `ADMIN_PASSWORD`   | Password for the `/admin` panel (not stored in the DB)               |
+| `VAPID_PUBLIC_KEY` | VAPID public key for Web Push (generate once — see below)            |
+| `VAPID_PRIVATE_KEY`| VAPID private key                                                    |
+| `VAPID_EMAIL`      | Contact email sent in push requests (e.g. `mailto:you@example.com`) |
+
+**Generate VAPID keys once** (only needs to be done once per deployment):
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+Copy the output into `.env`. If you regenerate these keys, all existing push subscriptions become invalid and users will need to re-subscribe.
+
+---
+
+### Option A — Docker (recommended)
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+```bash
+# Start everything (builds the image, starts postgres + app)
 docker compose up --build
 ```
 
 Open **http://localhost:3000**. The database schema is created automatically on first run.
 
-To stop: `docker compose down`. Data persists in the `postgres_data` Docker volume.
-To wipe data and start fresh: `docker compose down -v`.
+```bash
+docker compose down        # stop (data preserved in postgres_data volume)
+docker compose down -v     # stop and wipe all data
+```
 
 ---
 
@@ -134,22 +168,16 @@ To wipe data and start fresh: `docker compose down -v`.
 Requires [Node.js](https://nodejs.org/) 20+ and a running PostgreSQL instance.
 
 ```bash
-git clone <your-repo-url>
-cd Family
 npm install
 
-# 1. Create your environment file
-cp .env.example .env
-#    Set DB_HOST, DB_USER, DB_PASSWORD, DB_NAME to match your local Postgres
+# Set DB_HOST, DB_USER, DB_PASSWORD, DB_NAME in .env to match your local Postgres
 
-# 2. Start with auto-restart on file change
-npm run dev:watch
-
-# Or start once
+npm run dev:watch   # auto-restart on file changes
+# or
 npm run dev
 ```
 
-Open **http://localhost:3000**. Migrations run automatically on startup.
+Open **http://localhost:3000**.
 
 ---
 
@@ -160,158 +188,162 @@ npm run build   # compiles server/src/ → dist/
 npm start       # runs dist/index.js
 ```
 
-### Custom port
+---
 
-```bash
-PORT=8080 npm start
-# or set PORT in .env
-```
+## First-time setup
+
+After the server starts for the first time, there are no users — you'll see the login screen. Use the admin panel to create the first user:
+
+1. Go to **http://localhost:3000/#/admin**
+2. Enter the `ADMIN_PASSWORD` from your `.env`
+3. Create a user with a username and password
+4. Go to **http://localhost:3000** and log in
+
+---
+
+## Push notifications
+
+Push notifications use the [Web Push](https://developer.mozilla.org/en-US/docs/Web/API/Push_API) standard (VAPID). No third-party service required.
+
+**Browser support:**
+- ✅ Desktop: Chrome, Firefox, Edge, Safari 16+
+- ✅ Android: Chrome
+- ✅ iOS: Safari 16.4+ — **but only when the PWA is added to the Home Screen**
+
+**Subscribing:** After logging in, tap the 🔔 bell button in the header. The browser will ask for permission. The icon fills in when subscribed; tap again to unsubscribe.
+
+**Testing from admin panel:** In `#/admin`, users with active subscriptions show a 🔔 **Send test** button. Clicking it sends a test notification to all their subscribed devices.
+
+Multiple devices with the same account each register their own subscription — all receive notifications independently.
 
 ---
 
 ## Installing as a mobile app (PWA)
 
-FamilyHub is a Progressive Web App — you can install it on your iPhone home screen and it will feel like a native app.
-
 ### One-time icon generation
-
-After cloning, generate the PNG icons from the SVG source:
 
 ```bash
 node icons/generate.mjs
 ```
 
-This creates `icons/icon-180.png`, `icon-192.png`, and `icon-512.png`. You only need to re-run this if you change `icons/icon.svg`.
-
 ### Add to iPhone home screen
 
-1. Start the server: `npm start`
-2. Make sure your phone is on the same Wi-Fi as your Mac
-3. Find your Mac's local IP (`System Settings → Wi-Fi → Details`)
-4. Open **Safari** on iPhone → go to `http://<mac-ip>:3000`
-5. Tap the **Share** button → **Add to Home Screen** → **Add**
+1. Open **Safari** on iPhone → go to `http://<server-ip>:3000`
+2. Tap **Share** → **Add to Home Screen** → **Add**
 
-The app installs with the purple house icon and opens fullscreen with no browser chrome.
-
-### Updating the app
-
-After deploying code changes, bump `CACHE_NAME` in `sw.js` (e.g. `familyhub-v2`). This tells users' devices to fetch fresh files automatically on next open.
+The app opens fullscreen. Push notifications require this step on iOS.
 
 ---
 
 ## Migrations
 
-Schema changes are managed with TypeORM migrations — never `synchronize: true`.
+Schema changes use TypeORM migrations — `synchronize: false` is enforced.
 
 ```bash
-# Apply all pending migrations (also runs automatically on startup)
+# Apply pending migrations (also runs automatically on startup)
 npm run migration:run
 
 # Roll back the last migration
 npm run migration:revert
 
-# Generate a new migration after changing an entity file
+# Generate a new migration after changing an entity
 npm run migration:generate -- src/migrations/MyChange
 ```
-
-Migrations live in `server/src/migrations/` and are imported directly into `data-source.ts`, so they work identically with ts-node (dev) and compiled JS (prod).
 
 ---
 
 ## Data model
 
-All data is stored in PostgreSQL. The schema is managed by migrations:
-
-```jsonc
-{
-  "entities": [
-    {
-      "id": "home",
-      "name": "Home",
-      "emoji": "🏠",
-      "sections": [{ "id": "maintenance", "name": "Maintenance" }],
-    },
-  ],
-  "items": [
-    {
-      "id": "<uid>",
-      "entityId": "home",
-      "sectionId": "maintenance",
-      "name": "Roof inspection",
-      "status": "urgent", // "ok" | "soon" | "urgent"
-      "notes": "Due this spring",
-    },
-  ],
-  "tasks": [
-    {
-      "id": "<uid>",
-      "name": "Book a roof inspector",
-      "entityId": "home", // nullable
-      "priority": "high", // "low" | "medium" | "high" | null (no priority)
-      "done": false,
-      "assignedTo": "",
-      "dueDate": null, // "YYYY-MM-DD" | "YYYY-MM-DDTHH:MM" | null
-      "repeat": null, // "daily" | "weekly" | "biweekly" | "monthly" | "3months" | "6months" | "yearly" | "custom" | null
-      "repeatEvery": null, // number — used when repeat is "custom" (e.g. 3)
-      "repeatFrequency": null, // "days" | "weeks" | "months" | "years" — used when repeat is "custom"
-    },
-  ],
-}
-```
-
-The schema is created by the initial migration on first startup. To seed data manually, connect to the database while the server is stopped and insert rows directly, or use the app UI.
+| Table                | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| `entities`           | Household entities (Home, Car, …)                         |
+| `sections`           | Named groups within an entity, with `sort_order`          |
+| `items`              | Tracked things within a section, with `sort_order`        |
+| `tasks`              | Shared to-do items with optional repeat, priority, due date |
+| `users`              | App users (username + bcrypt password hash)               |
+| `push_subscriptions` | Per-device Web Push subscriptions (FK → users, cascade delete) |
 
 ---
 
 ## REST API
 
-Base URL: `http://localhost:3000/api`
+All protected endpoints require `Authorization: Bearer <token>`. Admin endpoints require `X-Admin-Password` header.
 
-| Method   | Endpoint                         | Description                                                                                                  |
-| -------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `GET`    | `/data`                          | Load full snapshot (used on app startup)                                                                     |
-| `GET`    | `/entities`                      | List all entities                                                                                            |
-| `POST`   | `/entities`                      | Create entity `{ name, emoji? }`                                                                             |
-| `PUT`    | `/entities/:id`                  | Update entity                                                                                                |
-| `DELETE` | `/entities/:id`                  | Delete entity + its items                                                                                    |
-| `POST`   | `/entities/:id/sections`         | Add section `{ name }`                                                                                       |
-| `PUT`    | `/entities/:id/sections/:sid`    | Rename section                                                                                               |
-| `DELETE` | `/entities/:id/sections/:sid`    | Delete section + its items                                                                                   |
-| `PUT`    | `/entities/:id/sections/reorder` | Reorder sections `{ ids: [...] }`                                                                            |
-| `PUT`    | `/items/reorder`                 | Reorder items within a section `{ entityId, sectionId, ids: [...] }`                                         |
-| `GET`    | `/items`                         | List all items                                                                                               |
-| `POST`   | `/items`                         | Create item `{ entityId, sectionId, name, status?, notes? }`                                                 |
-| `PUT`    | `/items/:id`                     | Update item fields                                                                                           |
-| `DELETE` | `/items/:id`                     | Delete item                                                                                                  |
-| `GET`    | `/tasks`                         | List all tasks                                                                                               |
-| `POST`   | `/tasks`                         | Create task `{ name, entityId?, priority?, assignedTo?, dueDate?, repeat?, repeatEvery?, repeatFrequency? }` |
-| `PUT`    | `/tasks/:id`                     | Update task fields                                                                                           |
-| `DELETE` | `/tasks/:id`                     | Delete task                                                                                                  |
+**Auth**
 
-All endpoints accept and return JSON.
+| Method | Endpoint                  | Description                        |
+| ------ | ------------------------- | ---------------------------------- |
+| `POST` | `/api/auth/login`         | `{ username, password }` → `{ token }` |
+| `POST` | `/api/auth/admin-login`   | `{ password }` → `{ ok: true }`    |
+
+**Admin** *(X-Admin-Password required)*
+
+| Method   | Endpoint                      | Description                        |
+| -------- | ----------------------------- | ---------------------------------- |
+| `GET`    | `/api/admin/users`            | List users (includes `hasPush` flag) |
+| `POST`   | `/api/admin/users`            | Create user `{ username, password }` |
+| `PUT`    | `/api/admin/users/:id/password` | Change password `{ password }`    |
+| `DELETE` | `/api/admin/users/:id`        | Delete user + their subscriptions  |
+| `POST`   | `/api/admin/push-test/:id`    | Send test push to user's devices   |
+
+**Push** *(subscribe/unsubscribe require Bearer token)*
+
+| Method   | Endpoint                    | Description                        |
+| -------- | --------------------------- | ---------------------------------- |
+| `GET`    | `/api/push/vapid-public-key`| Returns VAPID public key           |
+| `POST`   | `/api/push/subscribe`       | Save push subscription             |
+| `DELETE` | `/api/push/subscribe`       | Remove push subscription           |
+
+**Data** *(all require Bearer token)*
+
+| Method   | Endpoint                             | Description                             |
+| -------- | ------------------------------------ | --------------------------------------- |
+| `GET`    | `/api/data`                          | Full snapshot (startup)                 |
+| `POST`   | `/api/entities`                      | Create entity                           |
+| `PUT`    | `/api/entities/:id`                  | Update entity                           |
+| `DELETE` | `/api/entities/:id`                  | Delete entity                           |
+| `POST`   | `/api/entities/:id/sections`         | Add section                             |
+| `PUT`    | `/api/entities/:id/sections/:sid`    | Rename section                          |
+| `DELETE` | `/api/entities/:id/sections/:sid`    | Delete section                          |
+| `PUT`    | `/api/entities/:id/sections/reorder` | Reorder sections `{ ids }`              |
+| `PUT`    | `/api/items/reorder`                 | Reorder items `{ entityId, sectionId, ids }` |
+| `POST`   | `/api/items`                         | Create item                             |
+| `PUT`    | `/api/items/:id`                     | Update item                             |
+| `DELETE` | `/api/items/:id`                     | Delete item                             |
+| `POST`   | `/api/tasks`                         | Create task                             |
+| `PUT`    | `/api/tasks/:id`                     | Update task                             |
+| `DELETE` | `/api/tasks/:id`                     | Delete task                             |
 
 ---
 
 ## Architecture
 
 ```
-Browser                              Server (Express / TypeScript)
-──────────────────────────────────   ────────────────────────────────────────
+Browser                                   Server (Express / TypeScript)
+───────────────────────────────────────   ──────────────────────────────────────
 main.js (init)
-  └─ state.js ──── GET /api/data ──► index.ts
-  └─ render.js                         └─ data-source.ts (TypeORM DataSource)
-       └─ router.js (hash → view)            └─ PostgreSQL
-       └─ views/ (HTML strings)
-  └─ events.js (delegated handlers)
-       └─ api.js ──── REST calls ───► routes/ (async CRUD via TypeORM repos)
-       └─ modals/
+  ├─ auth.js (localStorage token)
+  ├─ push.js (Web Push subscribe)
+  ├─ state.js ──── GET /api/data ───────► index.ts
+  └─ render.js (auth-aware dispatcher)       ├─ authMiddleware (JWT verify)
+       ├─ router.js (hash → view)            ├─ adminMiddleware (header pw)
+       ├─ views/login.js                     ├─ data-source.ts (TypeORM)
+       ├─ views/admin.js                     │    └─ PostgreSQL
+       └─ views/ (tasks, entities, entity)   └─ routes/
+  └─ events.js (delegated handlers)               ├─ auth.ts
+       └─ api.js ──── REST calls ──────────►      ├─ admin.ts
+       └─ modals/                                  ├─ push.ts
+                                                   ├─ entities.ts
+                                                   ├─ items.ts
+                                                   └─ tasks.ts
 ```
 
 Key design decisions:
 
-- **Optimistic UI**: state is updated in memory immediately on user action; the API call fires in the background. This makes the UI feel instant even on slow localhost.
-- **Event delegation**: a single click handler on `#view` dispatches all actions via `data-action` attributes — no per-element listeners.
-- **No virtual DOM**: views return plain HTML strings and are re-rendered in full via `innerHTML`. This is fast enough for the data volumes involved and keeps the code simple.
-- **PostgreSQL + TypeORM**: all data is persisted in a proper relational database. TypeORM entities map directly to tables; `sort_order` columns preserve drag-and-drop order for sections and items; `created_at` on tasks provides stable newest-first ordering.
-- **Migrations over synchronize**: `synchronize: false` is enforced. Schema changes are always done through versioned migration files, making it safe to evolve the schema in production without data loss.
-- **Automatic migration runner**: `AppDataSource.runMigrations()` is called at startup before the HTTP server binds, so the schema is always up to date when the app becomes reachable.
+- **Auth-aware rendering**: `render.js` checks `isLoggedIn()` before dispatching to any view. Unauthenticated users always see the login screen (except `#/admin`, which has its own password gate).
+- **Admin session in memory**: `adminPassword` is stored only in a JS module variable — never in `localStorage` or `sessionStorage`. A page refresh always clears it.
+- **Optimistic UI**: state is updated in memory immediately; API calls fire in the background.
+- **Event delegation**: a single click handler on `#view` dispatches all actions via `data-action` attributes.
+- **No virtual DOM**: views return plain HTML strings rendered via `innerHTML`. Fast enough for the data volumes and keeps the code simple.
+- **Migrations over synchronize**: `synchronize: false` enforced. All schema changes go through versioned migration files.
+- **Push subscription cleanup**: when sending a push, expired subscriptions (HTTP 410/404 from the push service) are automatically deleted.

@@ -151,6 +151,36 @@ const en = {
     "Delete this entire entity and all its items? Tasks will be kept.",
   confirmDeleteSection: "Delete this section and all its items?",
 
+  /* ── Auth / Login ────────────────────────────────────────── */
+  loginUsername: "Username",
+  loginPassword: "Password",
+  loginBtn: "Sign in",
+  loginError: "Invalid username or password.",
+  loginAdminLink: "Admin",
+
+  /* ── Admin ───────────────────────────────────────────────── */
+  adminHeading: "Admin",
+  adminPasswordLabel: "Admin password",
+  adminLoginBtn: "Enter",
+  adminPasswordError: "Incorrect password.",
+  adminUsers: "Users",
+  adminNoUsers: "No users yet.",
+  adminAddUser: "Add user",
+  adminCreateBtn: "Create",
+  adminChangePassword: "Change password",
+  adminNewPassword: "New password",
+  adminSaveBtn: "Save",
+  adminDeleteUser: "Delete",
+  adminConfirmDelete: "Delete user {username}?",
+  adminUsernameLabel: "Username",
+  logoutBtn: "Log out",
+  pushEnable: "Enable notifications",
+  pushDisable: "Disable notifications",
+  pushDenied: "Notifications are blocked in your browser settings.",
+  adminPushTest: "Send test",
+  adminPushTestSent: "Sent!",
+  adminPushTestNone: "No subscriptions.",
+
   /* ── App loading / errors ────────────────────────────────── */
   loading: "Loading…",
   serverError: "Could not connect to server",
@@ -299,6 +329,36 @@ const lt = {
   confirmDeleteEntity:
     "Ištrinti visą objektą ir visus jo daiktus? Užduotys bus išsaugotos.",
   confirmDeleteSection: "Ištrinti šį skyrių ir visus jo daiktus?",
+
+  /* ── Auth / Login ────────────────────────────────────────── */
+  loginUsername: "Vartotojo vardas",
+  loginPassword: "Slaptažodis",
+  loginBtn: "Prisijungti",
+  loginError: "Neteisingas vartotojo vardas arba slaptažodis.",
+  loginAdminLink: "Admin",
+
+  /* ── Admin ───────────────────────────────────────────────── */
+  adminHeading: "Administravimas",
+  adminPasswordLabel: "Administratoriaus slaptažodis",
+  adminLoginBtn: "Įeiti",
+  adminPasswordError: "Neteisingas slaptažodis.",
+  adminUsers: "Vartotojai",
+  adminNoUsers: "Dar nėra vartotojų.",
+  adminAddUser: "Pridėti vartotoją",
+  adminCreateBtn: "Sukurti",
+  adminChangePassword: "Keisti slaptažodį",
+  adminNewPassword: "Naujas slaptažodis",
+  adminSaveBtn: "Išsaugoti",
+  adminDeleteUser: "Ištrinti",
+  adminConfirmDelete: "Ištrinti vartotoją {username}?",
+  adminUsernameLabel: "Vartotojo vardas",
+  logoutBtn: "Atsijungti",
+  pushEnable: "Įjungti pranešimus",
+  pushDisable: "Išjungti pranešimus",
+  pushDenied: "Pranešimai užblokuoti naršyklės nustatymuose.",
+  adminPushTest: "Siųsti testą",
+  adminPushTestSent: "Išsiųsta!",
+  adminPushTestNone: "Nėra prenumeratų.",
 
   /* ── App loading / errors ────────────────────────────────── */
   loading: "Kraunama…",

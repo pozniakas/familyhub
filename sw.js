@@ -19,6 +19,7 @@ const APP_SHELL = [
   "/css/tasks.css",
   "/css/modal.css",
   "/css/responsive.css",
+  "/css/auth.css",
   // JS entry + core modules
   "/js/main.js",
   "/js/state.js",
@@ -31,6 +32,8 @@ const APP_SHELL = [
   "/js/labels.js",
   "/js/i18n.js",
   "/js/data.js",
+  "/js/auth.js",
+  "/js/push.js",
   // Views
   "/js/views/dashboard.js",
   "/js/views/entity.js",
@@ -62,6 +65,33 @@ self.addEventListener("activate", (e) => {
         ),
       )
       .then(() => self.clients.claim()),
+  );
+});
+
+// ── Push notifications ────────────────────────────────────────────────────────
+self.addEventListener("push", (e) => {
+  let data = { title: "FamilyHub", body: "You have a new notification." };
+  try {
+    if (e.data) data = { ...data, ...e.data.json() };
+  } catch {}
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        if (clients.length) return clients[0].focus();
+        return self.clients.openWindow("/");
+      }),
   );
 });
 

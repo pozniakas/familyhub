@@ -1,0 +1,152 @@
+/* ── Login screen ──────────────────────────────────────────── */
+.login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 120px);
+  padding: 24px;
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.login-logo {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+.login-error {
+  color: var(--urgent);
+  font-size: 13px;
+  margin: 8px 0 4px;
+}
+
+.login-admin-link {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.login-admin-link a {
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.login-admin-link a:hover {
+  color: var(--primary);
+}
+
+/* ── Push / Logout buttons (shared icon button style) ─────── */
+.push-btn,
+.logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.push-btn:hover,
+.logout-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ── Admin page ────────────────────────────────────────────── */
+.admin-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.admin-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 16px;
+}
+
+.admin-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-user-row:last-of-type {
+  border-bottom: none;
+}
+
+.admin-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-username {
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.admin-user-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.admin-user-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.admin-change-pw-form {
+  padding: 8px 0 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-feedback {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.btn.danger {
+  color: var(--urgent);
+}
+
+.btn.danger:hover {
+  background: color-mix(in srgb, var(--urgent) 10%, transparent);
+}
