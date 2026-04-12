@@ -1,15 +1,29 @@
 {
   "name": "familyhub",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Shared family dashboard",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node --watch server/index.js"
+    "build": "tsc -p server/tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "ts-node --project server/tsconfig.json server/src/index.ts",
+    "dev:watch": "nodemon --watch 'server/src/**/*.ts' --ext ts --exec 'ts-node --project server/tsconfig.json server/src/index.ts'",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d server/src/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d server/src/data-source.ts",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate server/src/migrations/Migration -d server/src/data-source.ts"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.20"
   },
   "devDependencies": {
-    "sharp": "^0.33.0"
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.7",
+    "nodemon": "^3.1.0",
+    "sharp": "^0.33.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
   }
 }

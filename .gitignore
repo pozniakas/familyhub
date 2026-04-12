@@ -1,7 +1,13 @@
 # Dependencies
 node_modules/
 
-# Data — contains your personal family data, keep it local
+# Build output
+dist/
+
+# Environment variables — copy .env.example and fill in your values
+.env
+
+# Legacy flat-file data store (superseded by PostgreSQL)
 data/db.json
 
 # Generated icons — rebuilt from icon.svg via `node icons/generate.mjs`

@@ -26,14 +26,16 @@ Built with **vanilla JavaScript ES modules** on the frontend and a minimal **Nod
 
 ## Tech stack
 
-| Layer       | Technology                                                      |
-| ----------- | --------------------------------------------------------------- |
-| Frontend    | Vanilla JS (ES modules), HTML5, CSS3                            |
-| Backend     | Node.js, Express 4                                              |
-| Persistence | JSON flat file (`data/db.json`)                                 |
+| Layer       | Technology                                                       |
+| ----------- | ---------------------------------------------------------------- |
+| Frontend    | Vanilla JS (ES modules), HTML5, CSS3                             |
+| Backend     | Node.js 20, Express 4, TypeScript                                |
+| ORM         | TypeORM 0.3 (migrations, typed entities)                         |
+| Database    | PostgreSQL 16                                                    |
+| Containers  | Docker + Docker Compose                                          |
 | Routing     | Hash-based client-side SPA (`#/`, `#/entities`, `#/entity/:id`) |
 
-Zero frontend dependencies. The only npm package is **Express**.
+Zero frontend dependencies.
 
 ---
 
@@ -43,10 +45,11 @@ Zero frontend dependencies. The only npm package is **Express**.
 ├── index.html              # App shell (single HTML file)
 ├── manifest.json           # PWA manifest (name, icons, display mode)
 ├── sw.js                   # Service worker (cache-first for assets, network-first for API)
+├── Dockerfile              # Multi-stage build (builder → production)
+├── docker-compose.yml      # PostgreSQL + app containers
+├── .env.example            # Environment variable template
 ├── .gitignore
 ├── package.json
-├── data/
-│   └── db.json             # Persistent data store (auto-created on first write)
 ├── icons/
 │   ├── icon.svg            # Source icon
 │   ├── icon-180.png        # Apple touch icon (generated)
@@ -69,7 +72,7 @@ Zero frontend dependencies. The only npm package is **Express**.
 │   ├── events.js           # Delegated click & change handlers
 │   ├── modal.js            # Modal open/close logic
 │   ├── helpers.js          # Escape, greetingKey utils
-  ├── i18n.js             # EN/LT translations + t() helper
+│   ├── i18n.js             # EN/LT translations + t() helper
 │   ├── labels.js           # Status/priority labels & CSS classes
 │   ├── data.js             # Default seed data
 │   ├── views/
@@ -81,49 +84,87 @@ Zero frontend dependencies. The only npm package is **Express**.
 │       ├── items.js        # Add/edit item modals
 │       └── tasks.js        # Add/edit task modals
 └── server/
-    ├── index.js            # Express app setup & static file serving
-    ├── db.js               # JSON file read/write helpers
-    ├── utils.js            # uid() generator
-    └── routes/
-        ├── entities.js     # /api/entities (+ /sections sub-resource)
-        ├── items.js        # /api/items
-        └── tasks.js        # /api/tasks
+    ├── tsconfig.json       # TypeScript config for the server (compiled → dist/)
+    └── src/
+        ├── index.ts        # Express app setup, startup, migration runner
+        ├── data-source.ts  # TypeORM DataSource (connection + entity/migration list)
+        ├── utils.ts        # uid() — crypto.randomUUID() wrapper
+        ├── entity/
+        │   ├── FamilyEntity.ts  # entities table
+        │   ├── Section.ts       # sections table (sort_order, FK → entities)
+        │   ├── Item.ts          # items table (sort_order)
+        │   └── Task.ts          # tasks table (created_at for ordering)
+        ├── migrations/
+        │   └── 1744408800000-InitialSchema.ts  # creates all four tables
+        └── routes/
+            ├── entities.ts # /api/entities (+ /sections sub-resource)
+            ├── items.ts    # /api/items
+            └── tasks.ts    # /api/tasks
 ```
 
 ---
 
 ## Getting started
 
-### Prerequisites
+### Option A — Docker (recommended)
 
-- [Node.js](https://nodejs.org/) 18 or later
+The simplest way. Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/).
 
-### Install
+```bash
+git clone <your-repo-url>
+cd Family
+
+# 1. Create your environment file
+cp .env.example .env
+#    Edit .env and set a real DB_PASSWORD
+
+# 2. Start everything (builds the image, starts postgres + app)
+docker compose up --build
+```
+
+Open **http://localhost:3000**. The database schema is created automatically on first run.
+
+To stop: `docker compose down`. Data persists in the `postgres_data` Docker volume.
+To wipe data and start fresh: `docker compose down -v`.
+
+---
+
+### Option B — local development (no Docker)
+
+Requires [Node.js](https://nodejs.org/) 20+ and a running PostgreSQL instance.
 
 ```bash
 git clone <your-repo-url>
 cd Family
 npm install
-```
 
-### Run
+# 1. Create your environment file
+cp .env.example .env
+#    Set DB_HOST, DB_USER, DB_PASSWORD, DB_NAME to match your local Postgres
 
-```bash
-# Production (stable)
-npm start
+# 2. Start with auto-restart on file change
+npm run dev:watch
 
-# Development (auto-restarts on file change, requires Node 18+)
+# Or start once
 npm run dev
 ```
 
-Then open **http://localhost:3000** in your browser.
+Open **http://localhost:3000**. Migrations run automatically on startup.
 
-> **Note:** The app uses ES modules and must be served over HTTP — opening `index.html` directly via `file://` will not work.
+---
+
+### Building for production (outside Docker)
+
+```bash
+npm run build   # compiles server/src/ → dist/
+npm start       # runs dist/index.js
+```
 
 ### Custom port
 
 ```bash
 PORT=8080 npm start
+# or set PORT in .env
 ```
 
 ---
@@ -158,9 +199,28 @@ After deploying code changes, bump `CACHE_NAME` in `sw.js` (e.g. `familyhub-v2`)
 
 ---
 
+## Migrations
+
+Schema changes are managed with TypeORM migrations — never `synchronize: true`.
+
+```bash
+# Apply all pending migrations (also runs automatically on startup)
+npm run migration:run
+
+# Roll back the last migration
+npm run migration:revert
+
+# Generate a new migration after changing an entity file
+npm run migration:generate -- src/migrations/MyChange
+```
+
+Migrations live in `server/src/migrations/` and are imported directly into `data-source.ts`, so they work identically with ts-node (dev) and compiled JS (prod).
+
+---
+
 ## Data model
 
-All data is stored in `data/db.json` as a single JSON object:
+All data is stored in PostgreSQL. The schema is managed by migrations:
 
 ```jsonc
 {
@@ -199,7 +259,7 @@ All data is stored in `data/db.json` as a single JSON object:
 }
 ```
 
-The file is created automatically the first time data is written. You can seed it manually by editing the file while the server is stopped.
+The schema is created by the initial migration on first startup. To seed data manually, connect to the database while the server is stopped and insert rows directly, or use the app UI.
 
 ---
 
@@ -235,16 +295,16 @@ All endpoints accept and return JSON.
 ## Architecture
 
 ```
-Browser                              Server (Express)
-──────────────────────────────────   ───────────────────────────────
+Browser                              Server (Express / TypeScript)
+──────────────────────────────────   ────────────────────────────────────────
 main.js (init)
-  └─ state.js ──── GET /api/data ──► index.js
-  └─ render.js                         └─ db.js (reads db.json)
-       └─ router.js (hash → view)
+  └─ state.js ──── GET /api/data ──► index.ts
+  └─ render.js                         └─ data-source.ts (TypeORM DataSource)
+       └─ router.js (hash → view)            └─ PostgreSQL
        └─ views/ (HTML strings)
   └─ events.js (delegated handlers)
-       └─ api.js ──── REST calls ───► routes/ (CRUD)
-       └─ modals/                        └─ db.js (reads + writes db.json)
+       └─ api.js ──── REST calls ───► routes/ (async CRUD via TypeORM repos)
+       └─ modals/
 ```
 
 Key design decisions:
@@ -252,10 +312,6 @@ Key design decisions:
 - **Optimistic UI**: state is updated in memory immediately on user action; the API call fires in the background. This makes the UI feel instant even on slow localhost.
 - **Event delegation**: a single click handler on `#view` dispatches all actions via `data-action` attributes — no per-element listeners.
 - **No virtual DOM**: views return plain HTML strings and are re-rendered in full via `innerHTML`. This is fast enough for the data volumes involved and keeps the code simple.
-- **Flat file storage**: `db.json` is read and written synchronously on every request. This is intentional — the app is designed for single-household use with very low concurrency.
-
----
-
-## Customising the default data
-
-Edit `data/db.json` while the server is stopped, or modify the seed values exported from `js/data.js` (used as UI documentation / fallback). Add or rename entities and sections to match your household's needs.
+- **PostgreSQL + TypeORM**: all data is persisted in a proper relational database. TypeORM entities map directly to tables; `sort_order` columns preserve drag-and-drop order for sections and items; `created_at` on tasks provides stable newest-first ordering.
+- **Migrations over synchronize**: `synchronize: false` is enforced. Schema changes are always done through versioned migration files, making it safe to evolve the schema in production without data loss.
+- **Automatic migration runner**: `AppDataSource.runMigrations()` is called at startup before the HTTP server binds, so the schema is always up to date when the app becomes reachable.
