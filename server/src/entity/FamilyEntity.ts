@@ -12,6 +12,9 @@ export class FamilyEntity {
   @Column({ type: 'varchar', default: '📁' })
   emoji!: string;
 
+  @Column({ name: 'tenant_id', type: 'varchar' })
+  tenantId!: string;
+
   @OneToMany(() => Section, (section) => section.entity, { cascade: true })
   sections!: Section[];
 }

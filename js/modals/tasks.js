@@ -8,6 +8,13 @@ import { openModal, closeModal } from "../modal.js";
 
 /* ===== HELPERS ===== */
 
+/** Parse assigneeIds from stored JSON string or array */
+export function parseAssigneeIds(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  try { return JSON.parse(raw); } catch { return []; }
+}
+
 /** Radio button group for priority selection (null = nothing selected) */
 export function priorityRadios(selected) {
   return ["high", "medium", "low"]
@@ -203,6 +210,23 @@ function buildRepeatCustom(d) {
   };
 }
 
+/** Multi-checkbox user picker for the "Assigned to" field */
+function assigneePicker(selectedIds = []) {
+  const { users } = getState();
+  if (!users.length) return '';
+  const checkboxes = users.map((u) => `
+    <label class="assignee-option">
+      <input type="checkbox" name="assigneeIds" value="${esc(u.id)}"
+        ${selectedIds.includes(u.id) ? 'checked' : ''}>
+      <span>${esc(u.username)}</span>
+    </label>`).join('');
+  return `
+    <div class="form-group">
+      <label class="form-label">${t('fieldAssignedTo')} <span style="font-weight:400;text-transform:none;letter-spacing:0">${t('optional')}</span></label>
+      <div class="assignee-picker">${checkboxes}</div>
+    </div>`;
+}
+
 /** Build the entity select HTML for the "Related to" field */
 function entitySelect(selectedEntityId) {
   const { entities } = getState();
@@ -243,13 +267,7 @@ export function showAddTaskModal(preSelectedEntityId, renderFn) {
         <div class="priority-options">${priorityRadios(null)}</div>
       </div>
       ${dueDateSection(null, null, null, null)}
-      <div class="form-group">
-        <label class="form-label" for="task-assigned">
-          ${t('fieldAssignedTo')} <span style="font-weight:400;text-transform:none;letter-spacing:0">${t('optional')}</span>
-        </label>
-        <input class="form-input" id="task-assigned" name="assignedTo" type="text"
-          placeholder="${t('placeholderAssigned')}">
-      </div>
+      ${assigneePicker([])}
       <div class="form-actions">
         <button type="button" class="btn btn-ghost" data-action="close-modal">${t('btnCancel')}</button>
         <button type="submit" class="btn btn-primary">${t('btnAddTask')}</button>
@@ -262,12 +280,13 @@ export function showAddTaskModal(preSelectedEntityId, renderFn) {
   document.getElementById("task-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(e.target));
+    const assigneeIds = [...e.target.querySelectorAll('[name="assigneeIds"]:checked')].map((cb) => cb.value);
     const { repeatEvery, repeatFrequency } = buildRepeatCustom(d);
     const task = await api.createTask({
       name: d.name.trim(),
       entityId: d.entityId || null,
       priority: d.priority || null,
-      assignedTo: (d.assignedTo ?? "").trim(),
+      assigneeIds,
       dueDate: buildDueDate(d),
       repeat: buildRepeat(d),
       repeatEvery,
@@ -305,13 +324,7 @@ export function showEditTaskModal(taskId, renderFn) {
         <div class="priority-options">${priorityRadios(task.priority)}</div>
       </div>
       ${dueDateSection(task.dueDate ?? null, task.repeat ?? null, task.repeatEvery ?? null, task.repeatFrequency ?? null)}
-      <div class="form-group">
-        <label class="form-label" for="task-assigned">
-          ${t('fieldAssignedTo')} <span style="font-weight:400;text-transform:none;letter-spacing:0">${t('optional')}</span>
-        </label>
-        <input class="form-input" id="task-assigned" name="assignedTo" type="text"
-          value="${esc(task.assignedTo ?? "")}">
-      </div>
+      ${assigneePicker(parseAssigneeIds(task.assigneeIds))}
       <div class="form-actions">
         <button type="button" class="btn btn-ghost" data-action="close-modal">${t('btnCancel')}</button>
         <button type="submit" class="btn btn-primary">${t('btnSaveChanges')}</button>
@@ -324,12 +337,13 @@ export function showEditTaskModal(taskId, renderFn) {
   document.getElementById("task-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(e.target));
+    const assigneeIds = [...e.target.querySelectorAll('[name="assigneeIds"]:checked')].map((cb) => cb.value);
     const { repeatEvery, repeatFrequency } = buildRepeatCustom(d);
     const updates = {
       name: d.name.trim(),
       entityId: d.entityId || null,
       priority: d.priority || null,
-      assignedTo: (d.assignedTo ?? "").trim(),
+      assigneeIds,
       dueDate: buildDueDate(d),
       repeat: buildRepeat(d),
       repeatEvery,

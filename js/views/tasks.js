@@ -7,6 +7,7 @@ import {
   getTaskEntityFilter,
 } from "../state.js";
 import { priorityLabel, priorityBadgeClass } from "../labels.js";
+import { parseAssigneeIds } from "../modals/tasks.js";
 
 /* ===== DUE DATE HELPERS ===== */
 
@@ -87,10 +88,12 @@ const REPEAT_ICON = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none"
 
 /** Render a single task row (used in both the tasks view and the dashboard preview) */
 export function renderTaskItem(task) {
-  const { entities } = getState();
+  const { entities, users } = getState();
   const entity = entities.find((e) => e.id === task.entityId);
-  const assigned = task.assignedTo
-    ? `<span class="task-assigned">→ ${esc(task.assignedTo)}</span>`
+  const ids = parseAssigneeIds(task.assigneeIds);
+  const names = ids.map((id) => users.find((u) => u.id === id)?.username).filter(Boolean);
+  const assigned = names.length
+    ? `<span class="task-assigned">→ ${names.map(esc).join(', ')}</span>`
     : "";
   const due = formatDueDate(task.dueDate);
   const dueHtml = due
@@ -149,20 +152,15 @@ export function renderTasksView() {
   const filter = getTaskFilter();
   const assigneeFilter = getTaskAssigneeFilter();
   const entityFilter = getTaskEntityFilter();
-  const { tasks, entities } = getState();
-
-  // Collect unique non-empty assignees across all tasks
-  const assignees = [
-    ...new Set(tasks.map((t) => t.assignedTo).filter(Boolean)),
-  ].sort();
+  const { tasks, entities, users } = getState();
 
   let filtered = tasks;
   if (filter === "todo") filtered = filtered.filter((task) => !task.done);
   if (filter === "done") filtered = filtered.filter((task) => task.done);
   if (assigneeFilter === "__none__")
-    filtered = filtered.filter((t) => !t.assignedTo);
+    filtered = filtered.filter((task) => !parseAssigneeIds(task.assigneeIds).length);
   else if (assigneeFilter)
-    filtered = filtered.filter((t) => t.assignedTo === assigneeFilter);
+    filtered = filtered.filter((task) => parseAssigneeIds(task.assigneeIds).includes(assigneeFilter));
   if (entityFilter === "__none__")
     filtered = filtered.filter((t) => !t.entityId);
   else if (entityFilter)
@@ -177,7 +175,7 @@ export function renderTasksView() {
     <select class="filter-select ${assigneeFilter ? "filter-select-active" : ""}" data-action="set-assignee-filter">
       <option value="">${t("filterAssigneeAll")}</option>
       <option value="__none__" ${assigneeFilter === "__none__" ? "selected" : ""}>${t("filterAssigneeNone")}</option>
-      ${assignees.map((a) => `<option value="${esc(a)}" ${assigneeFilter === a ? "selected" : ""}>${esc(a)}</option>`).join("")}
+      ${users.map((u) => `<option value="${esc(u.id)}" ${assigneeFilter === u.id ? "selected" : ""}>${esc(u.username)}</option>`).join("")}
     </select>`;
 
   const entitySelect = `

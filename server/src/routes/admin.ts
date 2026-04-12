@@ -2,6 +2,9 @@ import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import { AppDataSource } from '../data-source';
 import { User } from '../entity/User';
+import { Tenant } from '../entity/Tenant';
+import { FamilyEntity } from '../entity/FamilyEntity';
+import { Task } from '../entity/Task';
 import { PushSubscription } from '../entity/PushSubscription';
 import { adminMiddleware } from '../middleware/auth';
 import { uid } from '../utils';
@@ -14,42 +17,117 @@ const wrap =
   (req: Request, res: Response, next: NextFunction) =>
     fn(req, res).catch(next);
 
-const userRepo = () => AppDataSource.getRepository(User);
-const subRepo  = () => AppDataSource.getRepository(PushSubscription);
+const userRepo   = () => AppDataSource.getRepository(User);
+const tenantRepo = () => AppDataSource.getRepository(Tenant);
+const subRepo    = () => AppDataSource.getRepository(PushSubscription);
 
-// All routes in this file require the admin password header
 router.use(adminMiddleware);
 
-/** GET /api/admin/users — list all users (no password hashes), with push subscription flag */
+// ── Tenants ────────────────────────────────────────────────────────────────────
+
+/** GET /api/admin/tenants — list all tenants with their users and push status */
 router.get(
-  '/users',
+  '/tenants',
   wrap(async (_req, res) => {
-    const users = await userRepo().find({
-      select: ['id', 'username', 'createdAt'],
-      order: { createdAt: 'ASC' },
-    });
-    const subs = await subRepo().find({ select: ['userId'] });
+    const [tenants, users, subs] = await Promise.all([
+      tenantRepo().find({ order: { createdAt: 'ASC' } }),
+      userRepo().find({ select: ['id', 'username', 'createdAt', 'tenantId'], order: { createdAt: 'ASC' } }),
+      subRepo().find({ select: ['userId'] }),
+    ]);
     const subscribedIds = new Set(subs.map((s) => s.userId));
-    const result = users.map((u) => ({ ...u, hasPush: subscribedIds.has(u.id) }));
-    res.json(result);
+    const tenantsWithUsers = tenants.map((t) => ({
+      ...t,
+      users: users
+        .filter((u) => u.tenantId === t.id)
+        .map((u) => ({ ...u, hasPush: subscribedIds.has(u.id) })),
+    }));
+    res.json(tenantsWithUsers);
   }),
 );
 
-/** POST /api/admin/users — create a user */
+/** POST /api/admin/tenants — create a tenant */
+router.post(
+  '/tenants',
+  wrap(async (req, res) => {
+    const { name } = req.body as { name?: string };
+    if (!name) return void res.status(400).json({ error: 'name is required' });
+    const existing = await tenantRepo().findOne({ where: { name } });
+    if (existing) return void res.status(409).json({ error: 'A tenant with this name already exists' });
+    const tenant = tenantRepo().create({ id: uid(), name });
+    await tenantRepo().save(tenant);
+    res.status(201).json({ ...tenant, users: [] });
+  }),
+);
+
+/** PUT /api/admin/tenants/:id — rename a tenant */
+router.put(
+  '/tenants/:id',
+  wrap(async (req, res) => {
+    const { name } = req.body as { name?: string };
+    if (!name) return void res.status(400).json({ error: 'name is required' });
+    const tenant = await tenantRepo().findOne({ where: { id: req.params.id } });
+    if (!tenant) return void res.status(404).json({ error: 'Tenant not found' });
+    tenant.name = name;
+    await tenantRepo().save(tenant);
+    res.json({ ok: true });
+  }),
+);
+
+/** DELETE /api/admin/tenants/:id — delete tenant and all its data */
+router.delete(
+  '/tenants/:id',
+  wrap(async (req, res) => {
+    const { id } = req.params;
+    // Delete in dependency order: tasks, entities, push_subscriptions via users cascade, users, tenant
+    await AppDataSource.getRepository(Task).delete({ tenantId: id });
+    await AppDataSource.getRepository(FamilyEntity).delete({ tenantId: id });
+    // Users cascade-delete their push subscriptions
+    await userRepo().delete({ tenantId: id });
+    await tenantRepo().delete(id);
+    res.status(204).end();
+  }),
+);
+
+// ── Users ──────────────────────────────────────────────────────────────────────
+
+/** GET /api/admin/users — list all users with push status (legacy, kept for compatibility) */
+router.get(
+  '/users',
+  wrap(async (_req, res) => {
+    const [users, subs] = await Promise.all([
+      userRepo().find({ select: ['id', 'username', 'createdAt', 'tenantId'], order: { createdAt: 'ASC' } }),
+      subRepo().find({ select: ['userId'] }),
+    ]);
+    const subscribedIds = new Set(subs.map((s) => s.userId));
+    res.json(users.map((u) => ({ ...u, hasPush: subscribedIds.has(u.id) })));
+  }),
+);
+
+/** POST /api/admin/users — create a user (tenantId required in body) */
 router.post(
   '/users',
   wrap(async (req, res) => {
-    const { username, password } = req.body as { username?: string; password?: string };
+    const { username, password, tenantId } = req.body as {
+      username?: string;
+      password?: string;
+      tenantId?: string;
+    };
     if (!username || !password) {
       return void res.status(400).json({ error: 'username and password are required' });
     }
+    if (!tenantId) {
+      return void res.status(400).json({ error: 'tenantId is required' });
+    }
+    const tenant = await tenantRepo().findOne({ where: { id: tenantId } });
+    if (!tenant) return void res.status(404).json({ error: 'Tenant not found' });
+
     const existing = await userRepo().findOne({ where: { username } });
     if (existing) return void res.status(409).json({ error: 'Username already taken' });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = userRepo().create({ id: uid(), username, passwordHash });
+    const user = userRepo().create({ id: uid(), username, passwordHash, tenantId });
     await userRepo().save(user);
-    res.status(201).json({ id: user.id, username: user.username, createdAt: user.createdAt });
+    res.status(201).json({ id: user.id, username: user.username, createdAt: user.createdAt, tenantId: user.tenantId, hasPush: false });
   }),
 );
 

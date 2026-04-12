@@ -11,6 +11,9 @@ export class User {
   @Column({ name: 'password_hash', type: 'text' })
   passwordHash!: string;
 
+  @Column({ name: 'tenant_id', type: 'varchar' })
+  tenantId!: string;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 }

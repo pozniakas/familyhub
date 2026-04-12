@@ -13,7 +13,8 @@ Built with **vanilla JavaScript ES modules** on the frontend and a **Node.js / E
 - **Entities** — grid of household things (Home, Car, Dog, etc.) with colour-coded status summaries. Each entity has custom sections (e.g. Home → Maintenance, Appliances).
 - **Items** — track things within a section with three statuses: 🟢 All good · 🟡 Needs attention · 🔴 Urgent.
 - **User authentication** — JWT-based login with persistent sessions (stored in `localStorage`). All data routes require a valid token.
-- **Admin panel** — password-protected at `#/admin` (uses `ADMIN_PASSWORD` env var, cleared on page refresh). Create, delete, and change passwords for users.
+- **Multi-tenancy** — admin panel manages multiple independent tenants (families). Each tenant has its own users, entities, tasks, and data — nothing is shared across tenants.
+- **Admin panel** — password-protected at `#/admin` (uses `ADMIN_PASSWORD` env var, cleared on page refresh). Create, rename, and delete tenants; create, delete, and change passwords for users within each tenant.
 - **Push notifications** — users can subscribe their device via the 🔔 bell in the header. Admins can send test pushes per user from the admin panel. Works on desktop browsers, Android Chrome, and iOS Safari 16.4+ (PWA must be added to Home Screen on iOS).
 - **Drag-and-drop reordering** — sections and items reorder by drag on desktop and touch on mobile.
 - **i18n** — English / Lithuanian toggle in the header; persisted in `localStorage`.
@@ -72,7 +73,7 @@ Zero frontend dependencies.
 │   ├── router.js           # Hash URL parser
 │   ├── events.js           # Delegated click & change handlers
 │   ├── modal.js            # Modal open/close logic
-│   ├── helpers.js          # esc(), greetingKey() utils
+│   ├── helpers.js          # esc(), uid(), greetingKey(), confirmDialog() utils
 │   ├── i18n.js             # EN/LT translations + t() helper
 │   ├── labels.js           # Status/priority labels & CSS classes
 │   ├── data.js             # Default seed data
@@ -97,17 +98,20 @@ Zero frontend dependencies.
         │   ├── Section.ts
         │   ├── Item.ts
         │   ├── Task.ts
-        │   ├── User.ts              # users table (username, bcrypt hash)
+        │   ├── User.ts              # users table (username, bcrypt hash, tenant_id)
+        │   ├── Tenant.ts            # tenants table
         │   └── PushSubscription.ts  # push_subscriptions table (per-device, FK → users)
         ├── migrations/
         │   ├── 1744408800000-InitialSchema.ts
         │   ├── 1744408800001-AddUsers.ts
-        │   └── 1744408800002-AddPushSubscriptions.ts
+        │   ├── 1744408800002-AddPushSubscriptions.ts
+        │   ├── 1744408800003-TaskAssigneeIds.ts
+        │   └── 1744408800004-AddTenants.ts
         ├── middleware/
         │   └── auth.ts     # authMiddleware (JWT), adminMiddleware (header password)
         └── routes/
             ├── auth.ts     # POST /api/auth/login, /api/auth/admin-login
-            ├── admin.ts    # /api/admin/users (CRUD) + /api/admin/push-test/:id
+            ├── admin.ts    # /api/admin/tenants (CRUD), /api/admin/users (CRUD), /api/admin/push-test/:id
             ├── push.ts     # /api/push/subscribe, /api/push/vapid-public-key
             ├── entities.ts
             ├── items.ts
@@ -192,12 +196,15 @@ npm start       # runs dist/index.js
 
 ## First-time setup
 
-After the server starts for the first time, there are no users — you'll see the login screen. Use the admin panel to create the first user:
+After the server starts for the first time, there are no tenants or users — you'll see the login screen. Use the admin panel to set things up:
 
 1. Go to **http://localhost:3000/#/admin**
 2. Enter the `ADMIN_PASSWORD` from your `.env`
-3. Create a user with a username and password
-4. Go to **http://localhost:3000** and log in
+3. Create a tenant (e.g. "Smith Family")
+4. Inside that tenant, create a user with a username and password
+5. Go to **http://localhost:3000** and log in
+
+Each tenant is a fully isolated family — its users, entities, tasks, and items are never visible to other tenants. You can run multiple families from a single deployment.
 
 ---
 
@@ -259,8 +266,9 @@ npm run migration:generate -- src/migrations/MyChange
 | `entities`           | Household entities (Home, Car, …)                         |
 | `sections`           | Named groups within an entity, with `sort_order`          |
 | `items`              | Tracked things within a section, with `sort_order`        |
-| `tasks`              | Shared to-do items with optional repeat, priority, due date |
-| `users`              | App users (username + bcrypt password hash)               |
+| `tasks`              | Shared to-do items with optional repeat, priority, due date, assignees |
+| `tenants`            | Isolated family groups; all data is scoped to a tenant    |
+| `users`              | App users (username + bcrypt hash + tenant_id)            |
 | `push_subscriptions` | Per-device Web Push subscriptions (FK → users, cascade delete) |
 
 ---
@@ -278,13 +286,16 @@ All protected endpoints require `Authorization: Bearer <token>`. Admin endpoints
 
 **Admin** *(X-Admin-Password required)*
 
-| Method   | Endpoint                      | Description                        |
-| -------- | ----------------------------- | ---------------------------------- |
-| `GET`    | `/api/admin/users`            | List users (includes `hasPush` flag) |
-| `POST`   | `/api/admin/users`            | Create user `{ username, password }` |
-| `PUT`    | `/api/admin/users/:id/password` | Change password `{ password }`    |
-| `DELETE` | `/api/admin/users/:id`        | Delete user + their subscriptions  |
-| `POST`   | `/api/admin/push-test/:id`    | Send test push to user's devices   |
+| Method   | Endpoint                        | Description                                      |
+| -------- | ------------------------------- | ------------------------------------------------ |
+| `GET`    | `/api/admin/tenants`            | List tenants with their users and push status    |
+| `POST`   | `/api/admin/tenants`            | Create tenant `{ name }` (name must be unique)   |
+| `PUT`    | `/api/admin/tenants/:id`        | Rename tenant `{ name }`                         |
+| `DELETE` | `/api/admin/tenants/:id`        | Delete tenant and all its data                   |
+| `POST`   | `/api/admin/users`              | Create user `{ username, password, tenantId }`   |
+| `PUT`    | `/api/admin/users/:id/password` | Change password `{ password }`                   |
+| `DELETE` | `/api/admin/users/:id`          | Delete user + their subscriptions                |
+| `POST`   | `/api/admin/push-test/:id`      | Send test push to user's devices                 |
 
 **Push** *(subscribe/unsubscribe require Bearer token)*
 
@@ -342,6 +353,8 @@ Key design decisions:
 
 - **Auth-aware rendering**: `render.js` checks `isLoggedIn()` before dispatching to any view. Unauthenticated users always see the login screen (except `#/admin`, which has its own password gate).
 - **Admin session in memory**: `adminPassword` is stored only in a JS module variable — never in `localStorage` or `sessionStorage`. A page refresh always clears it.
+- **Tenant data isolation**: `tenantId` is embedded in the JWT at login. Every data route filters by it — users only ever see their own tenant's data regardless of what IDs they pass.
+- **Custom confirm dialogs**: all destructive actions use an in-page modal instead of `window.confirm()`, so browser "block dialogs" settings never silently break deletions.
 - **Optimistic UI**: state is updated in memory immediately; API calls fire in the background.
 - **Event delegation**: a single click handler on `#view` dispatches all actions via `data-action` attributes.
 - **No virtual DOM**: views return plain HTML strings rendered via `innerHTML`. Fast enough for the data volumes and keeps the code simple.

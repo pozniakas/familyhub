@@ -17,8 +17,9 @@ export class Task {
   @Column({ type: 'boolean', default: false })
   done!: boolean;
 
-  @Column({ name: 'assigned_to', type: 'text', default: '' })
-  assignedTo!: string;
+  /** JSON array of user IDs, e.g. ["id1","id2"] */
+  @Column({ name: 'assignee_ids', type: 'text', nullable: true })
+  assigneeIds!: string | null;
 
   @Column({ name: 'due_date', type: 'varchar', nullable: true })
   dueDate!: string | null;
@@ -31,6 +32,9 @@ export class Task {
 
   @Column({ name: 'repeat_frequency', type: 'varchar', nullable: true })
   repeatFrequency!: string | null;
+
+  @Column({ name: 'tenant_id', type: 'varchar' })
+  tenantId!: string;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

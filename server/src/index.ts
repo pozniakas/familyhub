@@ -9,8 +9,10 @@ import { AppDataSource } from "./data-source";
 import { FamilyEntity } from "./entity/FamilyEntity";
 import { Item } from "./entity/Item";
 import { Task } from "./entity/Task";
+import { User } from "./entity/User";
 import webpush from "web-push";
-import { authMiddleware } from "./middleware/auth";
+import { authMiddleware, AuthRequest } from "./middleware/auth";
+import { In } from "typeorm";
 import authRoutes from "./routes/auth";
 import adminRoutes from "./routes/admin";
 import pushRoutes from "./routes/push";
@@ -56,17 +58,30 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/push", pushRoutes);
 
 // ── Protected API routes ──────────────────────────────────────────────────────
-app.get("/api/data", authMiddleware, async (_req, res, next) => {
+app.get("/api/data", authMiddleware, async (req, res, next) => {
   try {
-    const [entities, items, tasks] = await Promise.all([
-      AppDataSource.getRepository(FamilyEntity).find({
-        relations: ["sections"],
-        order: { sections: { sortOrder: "ASC" } },
+    const { tenantId } = (req as AuthRequest).user!;
+    const entities = await AppDataSource.getRepository(FamilyEntity).find({
+      where: { tenantId },
+      relations: ["sections"],
+      order: { sections: { sortOrder: "ASC" } },
+    });
+    const entityIds = entities.map((e) => e.id);
+    const [items, tasks, users] = await Promise.all([
+      entityIds.length
+        ? AppDataSource.getRepository(Item).find({
+            where: { entityId: In(entityIds) },
+            order: { sortOrder: "ASC" },
+          })
+        : Promise.resolve([]),
+      AppDataSource.getRepository(Task).find({ where: { tenantId }, order: { createdAt: "DESC" } }),
+      AppDataSource.getRepository(User).find({
+        select: ["id", "username"],
+        where: { tenantId },
+        order: { createdAt: "ASC" },
       }),
-      AppDataSource.getRepository(Item).find({ order: { sortOrder: "ASC" } }),
-      AppDataSource.getRepository(Task).find({ order: { createdAt: "DESC" } }),
     ]);
-    res.json({ entities, items, tasks });
+    res.json({ entities, items, tasks, users });
   } catch (err) {
     next(err);
   }

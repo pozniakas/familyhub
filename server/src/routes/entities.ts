@@ -3,6 +3,7 @@ import { AppDataSource } from '../data-source';
 import { FamilyEntity } from '../entity/FamilyEntity';
 import { Section } from '../entity/Section';
 import { Item } from '../entity/Item';
+import { AuthRequest } from '../middleware/auth';
 import { uid } from '../utils';
 
 const router = Router();
@@ -16,10 +17,13 @@ const entityRepo = () => AppDataSource.getRepository(FamilyEntity);
 const sectionRepo = () => AppDataSource.getRepository(Section);
 const itemRepo = () => AppDataSource.getRepository(Item);
 
+const tenantId = (req: Request) => (req as AuthRequest).user!.tenantId;
+
 router.get(
   '/',
-  wrap(async (_req, res) => {
+  wrap(async (req, res) => {
     const entities = await entityRepo().find({
+      where: { tenantId: tenantId(req) },
       relations: ['sections'],
       order: { sections: { sortOrder: 'ASC' } },
     });
@@ -32,7 +36,7 @@ router.post(
   wrap(async (req, res) => {
     const { name, emoji } = req.body as { name?: string; emoji?: string };
     if (!name) return void res.status(400).json({ error: 'name is required' });
-    const entity = entityRepo().create({ id: uid(), name, emoji: emoji || '📁' });
+    const entity = entityRepo().create({ id: uid(), name, emoji: emoji || '📁', tenantId: tenantId(req) });
     await entityRepo().save(entity);
     entity.sections = [];
     res.status(201).json(entity);
@@ -42,7 +46,7 @@ router.post(
 router.put(
   '/:id',
   wrap(async (req, res) => {
-    const entity = await entityRepo().findOne({ where: { id: req.params.id } });
+    const entity = await entityRepo().findOne({ where: { id: req.params.id, tenantId: tenantId(req) } });
     if (!entity) return void res.status(404).json({ error: 'Not found' });
     const { name, emoji } = req.body as { name?: string; emoji?: string };
     if (name !== undefined) entity.name = name;
@@ -55,16 +59,16 @@ router.put(
 router.delete(
   '/:id',
   wrap(async (req, res) => {
-    // Items have no FK to entities, so delete them manually before the entity
+    const entity = await entityRepo().findOne({ where: { id: req.params.id, tenantId: tenantId(req) } });
+    if (!entity) return void res.status(404).json({ error: 'Not found' });
     await itemRepo().delete({ entityId: req.params.id });
-    await entityRepo().delete(req.params.id); // CASCADE removes sections
+    await entityRepo().delete(req.params.id);
     res.status(204).end();
   }),
 );
 
 // ── Sections ────────────────────────────────────────────────────────────────
 
-// NOTE: /reorder must be registered before /:sid to avoid "reorder" matching as an id
 router.put(
   '/:id/sections/reorder',
   wrap(async (req, res) => {
@@ -77,7 +81,7 @@ router.put(
 router.post(
   '/:id/sections',
   wrap(async (req, res) => {
-    const entity = await entityRepo().findOne({ where: { id: req.params.id } });
+    const entity = await entityRepo().findOne({ where: { id: req.params.id, tenantId: tenantId(req) } });
     if (!entity) return void res.status(404).json({ error: 'Entity not found' });
     const { name } = req.body as { name?: string };
     if (!name) return void res.status(400).json({ error: 'name is required' });

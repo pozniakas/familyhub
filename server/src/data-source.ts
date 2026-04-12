@@ -5,10 +5,13 @@ import { Section } from './entity/Section';
 import { Item } from './entity/Item';
 import { Task } from './entity/Task';
 import { User } from './entity/User';
+import { Tenant } from './entity/Tenant';
 import { PushSubscription } from './entity/PushSubscription';
 import { InitialSchema1744408800000 } from './migrations/1744408800000-InitialSchema';
 import { AddUsers1744408800001 } from './migrations/1744408800001-AddUsers';
 import { AddPushSubscriptions1744408800002 } from './migrations/1744408800002-AddPushSubscriptions';
+import { TaskAssigneeIds1744408800003 } from './migrations/1744408800003-TaskAssigneeIds';
+import { AddTenants1744408800004 } from './migrations/1744408800004-AddTenants';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -19,6 +22,6 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'familyhub',
   synchronize: false, // never true — always use migrations
   logging: process.env.NODE_ENV !== 'production',
-  entities: [FamilyEntity, Section, Item, Task, User, PushSubscription],
-  migrations: [InitialSchema1744408800000, AddUsers1744408800001, AddPushSubscriptions1744408800002],
+  entities: [FamilyEntity, Section, Item, Task, User, Tenant, PushSubscription],
+  migrations: [InitialSchema1744408800000, AddUsers1744408800001, AddPushSubscriptions1744408800002, TaskAssigneeIds1744408800003, AddTenants1744408800004],
 });

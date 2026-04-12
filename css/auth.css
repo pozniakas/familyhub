@@ -143,10 +143,121 @@
   margin-bottom: 16px;
 }
 
+/* ── Tenant cards ──────────────────────────────────────────── */
+.admin-tenant-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.admin-tenant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.admin-tenant-header-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.admin-rename-form {
+  padding: 10px 0 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.admin-user-list-inner {
+  margin-bottom: 12px;
+}
+
+.admin-add-user-section {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+/* ── Assignee picker (multi-checkbox) ──────────────────────── */
+.assignee-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.assignee-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.assignee-option input[type="checkbox"] {
+  display: none;
+}
+
+.assignee-option:has(input:checked) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* ── Custom confirm dialog ─────────────────────────────────── */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.confirm-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 20px 16px;
+  width: min(320px, 90vw);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+
+.confirm-msg {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .btn.danger {
   color: var(--urgent);
 }
 
 .btn.danger:hover {
   background: color-mix(in srgb, var(--urgent) 10%, transparent);
+}
+
+.btn-destructive {
+  background: var(--urgent);
+  color: #fff;
+  border: none;
+}
+
+.btn-destructive:hover {
+  background: color-mix(in srgb, var(--urgent) 85%, black);
 }

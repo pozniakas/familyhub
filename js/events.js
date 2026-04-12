@@ -5,6 +5,7 @@ import {
   setTaskEntityFilter,
 } from "./state.js";
 import { t } from "./i18n.js";
+import { confirmDialog } from "./helpers.js";
 import { api } from "./api.js";
 
 /* ===== DRAG-AND-DROP (sections + items) ===== */
@@ -251,7 +252,7 @@ export function handleViewChange(e) {
         name: task.name,
         entityId: task.entityId,
         priority: task.priority,
-        assignedTo: task.assignedTo,
+        assigneeIds: task.assigneeIds ? JSON.parse(task.assigneeIds) : [],
         dueDate: nextDueDate(task.dueDate, task.repeat, task.repeatEvery, task.repeatFrequency),
         repeat: task.repeat,
         repeatEvery: task.repeatEvery,
@@ -280,7 +281,7 @@ export function handleViewChange(e) {
 }
 
 /** Central click handler — dispatches on [data-action] attributes */
-export function handleViewClick(e) {
+export async function handleViewClick(e) {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
   const { action, id, entityId, sectionId, filter } = btn.dataset;
@@ -300,7 +301,7 @@ export function handleViewClick(e) {
       break;
 
     case "delete-item":
-      if (!confirm(t("confirmDeleteItem"))) return;
+      if (!await confirmDialog(t("confirmDeleteItem"))) return;
       getState().items = getState().items.filter((i) => i.id !== id);
       render();
       api.deleteItem(id);
@@ -316,7 +317,7 @@ export function handleViewClick(e) {
       break;
 
     case "delete-task":
-      if (!confirm(t("confirmDeleteTask"))) return;
+      if (!await confirmDialog(t("confirmDeleteTask"))) return;
       getState().tasks = getState().tasks.filter((t) => t.id !== id);
       render();
       api.deleteTask(id);
@@ -337,7 +338,7 @@ export function handleViewClick(e) {
       break;
 
     case "delete-entity":
-      if (!confirm(t("confirmDeleteEntity"))) return;
+      if (!await confirmDialog(t("confirmDeleteEntity"))) return;
       {
         const s = getState();
         s.entities = s.entities.filter((e) => e.id !== entityId);
@@ -358,7 +359,7 @@ export function handleViewClick(e) {
       break;
 
     case "delete-section":
-      if (!confirm(t("confirmDeleteSection"))) return;
+      if (!await confirmDialog(t("confirmDeleteSection"))) return;
       {
         const s = getState();
         const entity = s.entities.find((e) => e.id === entityId);

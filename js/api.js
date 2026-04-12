@@ -68,11 +68,16 @@ export const api = {
       return data;
     }),
 
+  // ── Admin — tenant management ─────────────────────────────────────────────
+  adminGetTenants:     (pw)              => adminReq('GET',    '/admin/tenants',              null,                  pw),
+  adminCreateTenant:   (pw, data)        => adminReq('POST',   '/admin/tenants',              data,                  pw),
+  adminRenameTenant:   (pw, id, name)     => adminReq('PUT',    `/admin/tenants/${id}`,        { name },              pw),
+  adminDeleteTenant:   (pw, id)          => adminReq('DELETE', `/admin/tenants/${id}`,        null,                  pw),
+
   // ── Admin — user management ────────────────────────────────────────────────
-  adminGetUsers:       (pw)         => adminReq('GET',    '/admin/users',               null,       pw),
-  adminCreateUser:     (pw, data)   => adminReq('POST',   '/admin/users',               data,       pw),
-  adminDeleteUser:     (pw, id)     => adminReq('DELETE', `/admin/users/${id}`,          null,       pw),
-  adminChangePassword: (pw, id, np) => adminReq('PUT',    `/admin/users/${id}/password`, { password: np }, pw),
+  adminCreateUser:     (pw, data)        => adminReq('POST',   '/admin/users',               data,                  pw),
+  adminDeleteUser:     (pw, id)          => adminReq('DELETE', `/admin/users/${id}`,          null,                  pw),
+  adminChangePassword: (pw, id, np)      => adminReq('PUT',    `/admin/users/${id}/password`, { password: np },      pw),
 
   // ── Entities ───────────────────────────────────────────────────────────────
   createEntity:   (data)            => req('POST',   '/entities',                       data),

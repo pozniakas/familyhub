@@ -1,6 +1,6 @@
 import { api } from "./api.js";
 
-let state = { entities: [], items: [], tasks: [] };
+let state = { entities: [], items: [], tasks: [], users: [] };
 let taskFilter = "todo"; // 'todo' | 'done' | 'all'
 let taskAssigneeFilter = ""; // '' = all, '__none__' = unassigned, or a name
 let taskEntityFilter = ""; // '' = all, '__none__' = no entity, or an entity id
