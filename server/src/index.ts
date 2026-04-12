@@ -21,7 +21,7 @@ import taskRoutes from "./routes/tasks";
 // Configure VAPID for web push
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
-    process.env.VAPID_EMAIL || "mailto:admin@familyhub.local",
+    process.env.VAPID_EMAIL || "https://familyhub.example.com",
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY,
   );
