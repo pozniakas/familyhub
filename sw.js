@@ -35,6 +35,8 @@ const APP_SHELL = [
   "/js/auth.js",
   "/js/push.js",
   // Views
+  "/js/views/login.js",
+  "/js/views/admin.js",
   "/js/views/dashboard.js",
   "/js/views/entity.js",
   "/js/views/tasks.js",

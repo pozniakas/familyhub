@@ -50,7 +50,19 @@ app.get("/sw.js", (_req, res) => {
 });
 
 // Serve frontend static files
-app.use(express.static(ROOT));
+// - index.html: no-cache so the browser always revalidates (gets new SW + assets)
+// - Everything else: cache for 1 year (SW busts the app shell cache on deploy)
+app.use(
+  express.static(ROOT, {
+    setHeaders(res, filePath) {
+      if (filePath.endsWith("index.html")) {
+        res.setHeader("Cache-Control", "no-cache");
+      } else {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
+  }),
+);
 
 // ── Public auth routes (no JWT required) ─────────────────────────────────────
 app.use("/api/auth", authRoutes);
@@ -74,7 +86,10 @@ app.get("/api/data", authMiddleware, async (req, res, next) => {
             order: { sortOrder: "ASC" },
           })
         : Promise.resolve([]),
-      AppDataSource.getRepository(Task).find({ where: { tenantId }, order: { createdAt: "DESC" } }),
+      AppDataSource.getRepository(Task).find({
+        where: { tenantId },
+        order: { createdAt: "DESC" },
+      }),
       AppDataSource.getRepository(User).find({
         select: ["id", "username"],
         where: { tenantId },
