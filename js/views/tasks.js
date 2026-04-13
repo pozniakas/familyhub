@@ -91,13 +91,28 @@ export function renderTaskItem(task) {
   const { entities, users } = getState();
   const entity = entities.find((e) => e.id === task.entityId);
   const ids = parseAssigneeIds(task.assigneeIds);
-  const names = ids.map((id) => users.find((u) => u.id === id)?.username).filter(Boolean);
+  const names = ids
+    .map((id) => users.find((u) => u.id === id)?.username)
+    .filter(Boolean);
   const assigned = names.length
-    ? `<span class="task-assigned">→ ${names.map(esc).join(', ')}</span>`
+    ? `<span class="task-assigned">→ ${names.map(esc).join(", ")}</span>`
     : "";
-  const due = formatDueDate(task.dueDate);
+  const due =
+    task.done && task.completedAt
+      ? {
+          label: t("taskCompletedOn", {
+            date: new Date(task.completedAt).toLocaleDateString([], {
+              month: "short",
+              day: "numeric",
+            }),
+          }),
+          cls: "due-done",
+        }
+      : task.done
+        ? null // completed before completedAt tracking — show nothing
+        : formatDueDate(task.dueDate);
   const dueHtml = due
-    ? `<div class="task-due ${due.cls}">${CALENDAR_ICON} ${esc(due.label)}${task.repeat ? ` ${REPEAT_ICON}` : ""}</div>`
+    ? `<div class="task-due ${due.cls}">${CALENDAR_ICON} ${esc(due.label)}${!task.done && task.repeat ? ` ${REPEAT_ICON}` : ""}</div>`
     : "";
 
   return `
@@ -158,9 +173,13 @@ export function renderTasksView() {
   if (filter === "todo") filtered = filtered.filter((task) => !task.done);
   if (filter === "done") filtered = filtered.filter((task) => task.done);
   if (assigneeFilter === "__none__")
-    filtered = filtered.filter((task) => !parseAssigneeIds(task.assigneeIds).length);
+    filtered = filtered.filter(
+      (task) => !parseAssigneeIds(task.assigneeIds).length,
+    );
   else if (assigneeFilter)
-    filtered = filtered.filter((task) => parseAssigneeIds(task.assigneeIds).includes(assigneeFilter));
+    filtered = filtered.filter((task) =>
+      parseAssigneeIds(task.assigneeIds).includes(assigneeFilter),
+    );
   if (entityFilter === "__none__")
     filtered = filtered.filter((t) => !t.entityId);
   else if (entityFilter)

@@ -29,6 +29,7 @@ services:
     env_file: .env
     environment:
       DB_HOST: db # override the localhost default inside Docker
+      TZ: ${TZ:-UTC} # set your timezone so scheduler notifications fire at the right local time
     ports:
       - "0.0.0.0:${PORT:-3000}:3000"
 

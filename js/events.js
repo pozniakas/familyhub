@@ -128,9 +128,7 @@ export function handleTouchMove(e) {
   document
     .querySelectorAll(".drag-over")
     .forEach((x) => x.classList.remove("drag-over"));
-  const target = elBelow?.closest(
-    `[data-drag-type="${touchDragState.type}"]`,
-  );
+  const target = elBelow?.closest(`[data-drag-type="${touchDragState.type}"]`);
   if (target && target.dataset.dragId !== touchDragState.id) {
     target.classList.add("drag-over");
   }
@@ -146,9 +144,7 @@ export function handleTouchEnd(e) {
     .querySelectorAll(".drag-over, .dragging")
     .forEach((x) => x.classList.remove("drag-over", "dragging"));
 
-  const target = elBelow?.closest(
-    `[data-drag-type="${touchDragState.type}"]`,
-  );
+  const target = elBelow?.closest(`[data-drag-type="${touchDragState.type}"]`);
   if (!target || target.dataset.dragId === touchDragState.id) {
     touchDragState = null;
     return;
@@ -160,12 +156,18 @@ export function handleTouchEnd(e) {
 
   if (type === "section") {
     const entity = s.entities.find((e) => e.id === entityId);
-    if (!entity) { touchDragState = null; return; }
+    if (!entity) {
+      touchDragState = null;
+      return;
+    }
     const from = entity.sections.findIndex((s) => s.id === id);
     const to = entity.sections.findIndex((s) => s.id === targetId);
     entity.sections.splice(to, 0, entity.sections.splice(from, 1)[0]);
     render();
-    api.reorderSections(entityId, entity.sections.map((s) => s.id));
+    api.reorderSections(
+      entityId,
+      entity.sections.map((s) => s.id),
+    );
   } else if (type === "item") {
     const sec = sectionId;
     const sectionItems = s.items.filter(
@@ -179,7 +181,11 @@ export function handleTouchEnd(e) {
     );
     s.items = [...others, ...sectionItems];
     render();
-    api.reorderItems(entityId, sec, sectionItems.map((i) => i.id));
+    api.reorderItems(
+      entityId,
+      sec,
+      sectionItems.map((i) => i.id),
+    );
   }
 
   touchDragState = null;
@@ -213,26 +219,50 @@ function nextDueDate(dueDate, repeat, repeatEvery, repeatFrequency) {
   if (repeat === "custom") {
     const n = Math.max(1, repeatEvery || 1);
     switch (repeatFrequency) {
-      case "weeks":  date.setDate(date.getDate() + n * 7);     break;
-      case "months": date.setMonth(date.getMonth() + n);       break;
-      case "years":  date.setFullYear(date.getFullYear() + n); break;
-      default:       date.setDate(date.getDate() + n);         break; // days
+      case "weeks":
+        date.setDate(date.getDate() + n * 7);
+        break;
+      case "months":
+        date.setMonth(date.getMonth() + n);
+        break;
+      case "years":
+        date.setFullYear(date.getFullYear() + n);
+        break;
+      default:
+        date.setDate(date.getDate() + n);
+        break; // days
     }
   } else {
     switch (repeat) {
-      case "daily":    date.setDate(date.getDate() + 1);         break;
-      case "weekly":   date.setDate(date.getDate() + 7);         break;
-      case "biweekly": date.setDate(date.getDate() + 14);        break;
-      case "monthly":  date.setMonth(date.getMonth() + 1);       break;
-      case "3months":  date.setMonth(date.getMonth() + 3);       break;
-      case "6months":  date.setMonth(date.getMonth() + 6);       break;
-      case "yearly":   date.setFullYear(date.getFullYear() + 1); break;
+      case "daily":
+        date.setDate(date.getDate() + 1);
+        break;
+      case "weekly":
+        date.setDate(date.getDate() + 7);
+        break;
+      case "biweekly":
+        date.setDate(date.getDate() + 14);
+        break;
+      case "monthly":
+        date.setMonth(date.getMonth() + 1);
+        break;
+      case "3months":
+        date.setMonth(date.getMonth() + 3);
+        break;
+      case "6months":
+        date.setMonth(date.getMonth() + 6);
+        break;
+      case "yearly":
+        date.setFullYear(date.getFullYear() + 1);
+        break;
     }
   }
 
   const p = (n) => String(n).padStart(2, "0");
   const dateStr = `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}`;
-  return hasTime ? `${dateStr}T${p(date.getHours())}:${p(date.getMinutes())}` : dateStr;
+  return hasTime
+    ? `${dateStr}T${p(date.getHours())}:${p(date.getMinutes())}`
+    : dateStr;
 }
 
 /** Change handler — handles task checkbox toggles and dropdown filters via event delegation */
@@ -245,26 +275,38 @@ export function handleViewChange(e) {
     // Recurring task being checked: mark this instance done AND create the next occurrence
     if (e.target.checked && task.repeat && task.dueDate) {
       task.done = true;
+      task.completedAt = new Date().toISOString();
       render();
       api.updateTask(id, { done: true });
-      // Create the next occurrence in the background
-      api.createTask({
-        name: task.name,
-        entityId: task.entityId,
-        priority: task.priority,
-        assigneeIds: task.assigneeIds ? JSON.parse(task.assigneeIds) : [],
-        dueDate: nextDueDate(task.dueDate, task.repeat, task.repeatEvery, task.repeatFrequency),
-        repeat: task.repeat,
-        repeatEvery: task.repeatEvery,
-        repeatFrequency: task.repeatFrequency,
-      }).then((newTask) => {
-        getState().tasks.unshift(newTask);
-        render();
-      });
+      // Create the next occurrence in the background — no creation notification
+      api
+        .createTask({
+          name: task.name,
+          entityId: task.entityId,
+          priority: task.priority,
+          assigneeIds: task.assigneeIds ? JSON.parse(task.assigneeIds) : [],
+          dueDate: nextDueDate(
+            task.dueDate,
+            task.repeat,
+            task.repeatEvery,
+            task.repeatFrequency,
+          ),
+          repeat: task.repeat,
+          repeatEvery: task.repeatEvery,
+          repeatFrequency: task.repeatFrequency,
+          earlyReminderValue: task.earlyReminderValue ?? null,
+          earlyReminderUnit: task.earlyReminderUnit ?? null,
+          suppressNotification: true,
+        })
+        .then((newTask) => {
+          getState().tasks.unshift(newTask);
+          render();
+        });
       return;
     }
 
     task.done = e.target.checked;
+    task.completedAt = task.done ? new Date().toISOString() : null;
     render();
     api.updateTask(id, { done: task.done });
     return;
@@ -301,7 +343,7 @@ export async function handleViewClick(e) {
       break;
 
     case "delete-item":
-      if (!await confirmDialog(t("confirmDeleteItem"))) return;
+      if (!(await confirmDialog(t("confirmDeleteItem")))) return;
       getState().items = getState().items.filter((i) => i.id !== id);
       render();
       api.deleteItem(id);
@@ -317,7 +359,7 @@ export async function handleViewClick(e) {
       break;
 
     case "delete-task":
-      if (!await confirmDialog(t("confirmDeleteTask"))) return;
+      if (!(await confirmDialog(t("confirmDeleteTask")))) return;
       getState().tasks = getState().tasks.filter((t) => t.id !== id);
       render();
       api.deleteTask(id);
@@ -338,7 +380,7 @@ export async function handleViewClick(e) {
       break;
 
     case "delete-entity":
-      if (!await confirmDialog(t("confirmDeleteEntity"))) return;
+      if (!(await confirmDialog(t("confirmDeleteEntity")))) return;
       {
         const s = getState();
         s.entities = s.entities.filter((e) => e.id !== entityId);
@@ -359,7 +401,7 @@ export async function handleViewClick(e) {
       break;
 
     case "delete-section":
-      if (!await confirmDialog(t("confirmDeleteSection"))) return;
+      if (!(await confirmDialog(t("confirmDeleteSection")))) return;
       {
         const s = getState();
         const entity = s.entities.find((e) => e.id === entityId);

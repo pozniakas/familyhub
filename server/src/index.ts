@@ -19,6 +19,7 @@ import pushRoutes from "./routes/push";
 import entityRoutes from "./routes/entities";
 import itemRoutes from "./routes/items";
 import taskRoutes from "./routes/tasks";
+import { startScheduler } from "./scheduler";
 
 // Configure VAPID for web push
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -50,16 +51,14 @@ app.get("/sw.js", (_req, res) => {
 });
 
 // Serve frontend static files
-// - index.html: no-cache so the browser always revalidates (gets new SW + assets)
-// - Everything else: cache for 1 year (SW busts the app shell cache on deploy)
+// All files: no-cache so Cloudflare/browsers always revalidate via ETag/Last-Modified.
+// "immutable" caching is only safe with content-hashed filenames — without it,
+// Cloudflare would serve stale JS/CSS for up to a year after a deploy.
+// The service worker handles offline caching; HTTP cache just provides fast 304s.
 app.use(
   express.static(ROOT, {
-    setHeaders(res, filePath) {
-      if (filePath.endsWith("index.html")) {
-        res.setHeader("Cache-Control", "no-cache");
-      } else {
-        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-      }
+    setHeaders(_res, _filePath) {
+      _res.setHeader("Cache-Control", "no-cache");
     },
   }),
 );
@@ -129,6 +128,7 @@ AppDataSource.initialize()
     console.log("Migrations up to date.");
     app.listen(PORT, () => {
       console.log(`FamilyHub running at http://localhost:${PORT}`);
+      startScheduler();
     });
   })
   .catch((err: unknown) => {

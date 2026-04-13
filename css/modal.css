@@ -187,7 +187,8 @@
   gap: 8px;
 }
 .due-time-row,
-.due-repeat-row {
+.due-repeat-row,
+.due-reminder-row {
   /* slide in when a date is selected */
   animation: slideDown 0.15s ease;
 }

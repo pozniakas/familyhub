@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import webpush from 'web-push';
 import { AppDataSource } from '../data-source';
 import { PushSubscription } from '../entity/PushSubscription';
+import { User } from '../entity/User';
 import { authMiddleware, AuthRequest } from '../middleware/auth';
 import { uid } from '../utils';
 
@@ -89,6 +90,23 @@ export async function sendPushToUser(
     }
   }
   return { sent, errors };
+}
+
+/** Send a push notification to every subscribed user in a tenant, optionally skipping one user */
+export async function sendPushToTenant(
+  tenantId: string,
+  payload: object,
+  excludeUserId?: string,
+): Promise<void> {
+  const users = await AppDataSource.getRepository(User).find({
+    select: ['id'],
+    where: { tenantId },
+  });
+  await Promise.all(
+    users
+      .filter((u) => u.id !== excludeUserId)
+      .map((u) => sendPushToUser(u.id, payload)),
+  );
 }
 
 export default router;

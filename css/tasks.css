@@ -180,6 +180,10 @@
   background: var(--urgent-bg);
   color: var(--urgent);
 }
+.due-done {
+  background: var(--bg);
+  color: var(--text-secondary);
+}
 
 /* ===== EMPTY STATE ===== */
 .empty-state {

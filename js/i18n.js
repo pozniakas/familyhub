@@ -50,6 +50,7 @@ const en = {
   filterEntityNone: "No entity",
   emptyTodo: "No open tasks — enjoy the peace!",
   emptyDone: "No completed tasks yet.",
+  taskCompletedOn: "Done {date}",
 
   /* ── Due date labels ─────────────────────────────────────── */
   dueOverdue: "Overdue · {date}",
@@ -140,6 +141,13 @@ const en = {
   noEntity: "No entity",
   fieldPriority: "Priority",
   fieldDueDate: "Due date",
+  fieldEarlyReminder: "Early reminder",
+  earlyReminderNone: "None",
+  earlyReminderMinutes: "Minutes",
+  earlyReminderHours: "Hours",
+  earlyReminderDays: "Days",
+  earlyReminderWeeks: "Weeks",
+  earlyReminderMonths: "Months",
   fieldAssignedTo: "Assigned to",
   placeholderAssigned: "e.g. You or Partner",
   btnAddTask: "Add task",
@@ -169,7 +177,8 @@ const en = {
   adminTenantName: "Tenant name",
   adminCreateTenantBtn: "Create tenant",
   adminRenameTenant: "Change name",
-  adminConfirmDeleteTenant: "Delete tenant \"{name}\" and ALL its data (users, entities, tasks)?",
+  adminConfirmDeleteTenant:
+    'Delete tenant "{name}" and ALL its data (users, entities, tasks)?',
   adminUsers: "Users",
   adminNoUsers: "No users in this tenant yet.",
   adminAddUser: "Add user",
@@ -236,6 +245,7 @@ const lt = {
   filterEntityNone: "Be objekto",
   emptyTodo: "Nėra atvirų užduočių — mėgaukitės ramybe!",
   emptyDone: "Dar nėra atliktų užduočių.",
+  taskCompletedOn: "Atlikta {date}",
 
   /* ── Due date labels ─────────────────────────────────────── */
   dueOverdue: "Vėluojama · {date}",
@@ -326,6 +336,13 @@ const lt = {
   noEntity: "Nėra objekto",
   fieldPriority: "Prioritetas",
   fieldDueDate: "Terminas",
+  fieldEarlyReminder: "Išankstinis priminimas",
+  earlyReminderNone: "Nėra",
+  earlyReminderMinutes: "Minučių",
+  earlyReminderHours: "Valandų",
+  earlyReminderDays: "Dienų",
+  earlyReminderWeeks: "Savaičių",
+  earlyReminderMonths: "Mėnesių",
   fieldAssignedTo: "Priskirta",
   placeholderAssigned: "pvz. Tu arba Partneris",
   btnAddTask: "Pridėti užduotį",
@@ -355,7 +372,8 @@ const lt = {
   adminTenantName: "Nuomininko pavadinimas",
   adminCreateTenantBtn: "Sukurti nuomininką",
   adminRenameTenant: "Keisti pavadinimą",
-  adminConfirmDeleteTenant: "Ištrinti nuomininką \"{name}\" ir VISUS jo duomenis (vartotojus, objektus, užduotis)?",
+  adminConfirmDeleteTenant:
+    'Ištrinti nuomininką "{name}" ir VISUS jo duomenis (vartotojus, objektus, užduotis)?',
   adminUsers: "Vartotojai",
   adminNoUsers: "Dar nėra vartotojų šiame nuomininke.",
   adminAddUser: "Pridėti vartotoją",

@@ -12,7 +12,11 @@ import { openModal, closeModal } from "../modal.js";
 export function parseAssigneeIds(raw) {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
-  try { return JSON.parse(raw); } catch { return []; }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
 }
 
 /** Radio button group for priority selection (null = nothing selected) */
@@ -45,7 +49,14 @@ export function bindPriorityRadios() {
 }
 
 const REPEAT_OPTIONS = [
-  "daily", "weekly", "biweekly", "monthly", "3months", "6months", "yearly", "custom",
+  "daily",
+  "weekly",
+  "biweekly",
+  "monthly",
+  "3months",
+  "6months",
+  "yearly",
+  "custom",
 ];
 
 const REPEAT_FREQ_OPTIONS = ["days", "weeks", "months", "years"];
@@ -57,27 +68,37 @@ const REPEAT_FREQ_OPTIONS = ["days", "weeks", "months", "years"];
  * repeatEvery: number (custom interval count, default 1)
  * repeatFrequency: "days"|"weeks"|"months"|"years" (custom unit, default "days")
  */
-function dueDateSection(dueDate, repeat, repeatEvery, repeatFrequency) {
+function dueDateSection(
+  dueDate,
+  repeat,
+  repeatEvery,
+  repeatFrequency,
+  earlyReminderValue,
+  earlyReminderUnit,
+) {
   const datePart = dueDate ? dueDate.split("T")[0] : "";
-  const timePart = dueDate && dueDate.includes("T") ? dueDate.split("T")[1] : "";
+  const timePart =
+    dueDate && dueDate.includes("T") ? dueDate.split("T")[1] : "";
   const hasDate = !!datePart;
   const isCustom = repeat === "custom";
   const everyVal = repeatEvery ?? 1;
   const freqVal = repeatFrequency ?? "days";
 
-  const repeatOptions = REPEAT_OPTIONS.map((r) =>
-    `<option value="${r}" ${repeat === r ? "selected" : ""}>${t("repeat" + r.charAt(0).toUpperCase() + r.slice(1))}</option>`
+  const repeatOptions = REPEAT_OPTIONS.map(
+    (r) =>
+      `<option value="${r}" ${repeat === r ? "selected" : ""}>${t("repeat" + r.charAt(0).toUpperCase() + r.slice(1))}</option>`,
   ).join("");
 
-  const freqOptions = REPEAT_FREQ_OPTIONS.map((f) =>
-    `<option value="${f}" ${freqVal === f ? "selected" : ""}>${t("repeatFreq" + f.charAt(0).toUpperCase() + f.slice(1))}</option>`
+  const freqOptions = REPEAT_FREQ_OPTIONS.map(
+    (f) =>
+      `<option value="${f}" ${freqVal === f ? "selected" : ""}>${t("repeatFreq" + f.charAt(0).toUpperCase() + f.slice(1))}</option>`,
   ).join("");
 
   return `
     <div class="form-group">
       <label class="form-label">
-        ${t('fieldDueDate')}
-        <span style="font-weight:400;text-transform:none;letter-spacing:0"> ${t('optional')}</span>
+        ${t("fieldDueDate")}
+        <span style="font-weight:400;text-transform:none;letter-spacing:0"> ${t("optional")}</span>
       </label>
       <div class="due-picker">
         <div class="due-row" id="due-date-row">
@@ -134,6 +155,26 @@ function dueDateSection(dueDate, repeat, repeatEvery, repeatFrequency) {
             </div>
           </div>
         </div>
+        <div class="due-row due-reminder-row" id="due-reminder-row" style="${hasDate ? "" : "display:none"}">
+          <div class="due-custom-fields">
+            <div class="due-custom-field">
+              <label class="due-custom-label">${t("fieldEarlyReminder")}</label>
+              <input type="number" class="form-input due-custom-number" name="earlyReminderValue"
+                id="modal-early-reminder-value" min="1" max="200"
+                placeholder="${t("earlyReminderNone")}" value="${earlyReminderValue || ""}">
+            </div>
+            <div class="due-custom-field">
+              <label class="due-custom-label">&nbsp;</label>
+              <select class="form-input" name="earlyReminderUnit" id="modal-early-reminder-unit">
+                <option value="minutes" ${earlyReminderUnit === "minutes" ? "selected" : ""}>${t("earlyReminderMinutes")}</option>
+                <option value="hours"   ${earlyReminderUnit === "hours" ? "selected" : ""}>${t("earlyReminderHours")}</option>
+                <option value="days"    ${!earlyReminderUnit || earlyReminderUnit === "days" ? "selected" : ""}>${t("earlyReminderDays")}</option>
+                <option value="weeks"   ${earlyReminderUnit === "weeks" ? "selected" : ""}>${t("earlyReminderWeeks")}</option>
+                <option value="months"  ${earlyReminderUnit === "months" ? "selected" : ""}>${t("earlyReminderMonths")}</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
     </div>`;
 }
@@ -145,6 +186,10 @@ function bindDuePicker() {
   const timeRow = document.getElementById("due-time-row");
   const repeatRow = document.getElementById("due-repeat-row");
   const customRow = document.getElementById("due-custom-row");
+  const reminderRow = document.getElementById("due-reminder-row");
+  const reminderValueInput = document.getElementById(
+    "modal-early-reminder-value",
+  );
   const repeatSelect = document.getElementById("modal-repeat");
   const repeatEvery = document.getElementById("modal-repeat-every");
   const dateClear = document.getElementById("due-date-clear");
@@ -154,12 +199,14 @@ function bindDuePicker() {
     const hasDate = !!dateInput.value;
     timeRow.style.display = hasDate ? "" : "none";
     repeatRow.style.display = hasDate ? "" : "none";
+    reminderRow.style.display = hasDate ? "" : "none";
     dateClear.style.display = hasDate ? "" : "none";
     if (!hasDate) {
       timeInput.value = "";
       timeClear.style.display = "none";
       repeatSelect.value = "";
       customRow.style.display = "none";
+      reminderValueInput.value = "";
     }
   });
 
@@ -170,8 +217,10 @@ function bindDuePicker() {
     timeRow.style.display = "none";
     repeatRow.style.display = "none";
     customRow.style.display = "none";
+    reminderRow.style.display = "none";
     dateClear.style.display = "none";
     timeClear.style.display = "none";
+    reminderValueInput.value = "";
   });
 
   repeatSelect.addEventListener("change", () => {
@@ -205,24 +254,31 @@ function buildRepeat(d) {
 /** Extract custom repeat fields (only meaningful when repeat === "custom") */
 function buildRepeatCustom(d) {
   return {
-    repeatEvery: d.repeat === "custom" ? Math.max(1, parseInt(d.repeatEvery, 10) || 1) : null,
-    repeatFrequency: d.repeat === "custom" ? (d.repeatFrequency || "days") : null,
+    repeatEvery:
+      d.repeat === "custom"
+        ? Math.max(1, parseInt(d.repeatEvery, 10) || 1)
+        : null,
+    repeatFrequency: d.repeat === "custom" ? d.repeatFrequency || "days" : null,
   };
 }
 
 /** Multi-checkbox user picker for the "Assigned to" field */
 function assigneePicker(selectedIds = []) {
   const { users } = getState();
-  if (!users.length) return '';
-  const checkboxes = users.map((u) => `
+  if (!users.length) return "";
+  const checkboxes = users
+    .map(
+      (u) => `
     <label class="assignee-option">
       <input type="checkbox" name="assigneeIds" value="${esc(u.id)}"
-        ${selectedIds.includes(u.id) ? 'checked' : ''}>
+        ${selectedIds.includes(u.id) ? "checked" : ""}>
       <span>${esc(u.username)}</span>
-    </label>`).join('');
+    </label>`,
+    )
+    .join("");
   return `
     <div class="form-group">
-      <label class="form-label">${t('fieldAssignedTo')} <span style="font-weight:400;text-transform:none;letter-spacing:0">${t('optional')}</span></label>
+      <label class="form-label">${t("fieldAssignedTo")} <span style="font-weight:400;text-transform:none;letter-spacing:0">${t("optional")}</span></label>
       <div class="assignee-picker">${checkboxes}</div>
     </div>`;
 }
@@ -232,12 +288,15 @@ function entitySelect(selectedEntityId) {
   const { entities } = getState();
   return `
     <div class="form-group">
-      <label class="form-label" for="task-entity">${t('fieldRelatedTo')}</label>
+      <label class="form-label" for="task-entity">${t("fieldRelatedTo")}</label>
       <select class="form-select" id="task-entity" name="entityId">
-        <option value="">— ${t('noEntity')} —</option>
-        ${entities.map((e) =>
-          `<option value="${esc(e.id)}" ${e.id === selectedEntityId ? "selected" : ""}>${esc(e.name)}</option>`
-        ).join("")}
+        <option value="">— ${t("noEntity")} —</option>
+        ${entities
+          .map(
+            (e) =>
+              `<option value="${esc(e.id)}" ${e.id === selectedEntityId ? "selected" : ""}>${esc(e.name)}</option>`,
+          )
+          .join("")}
       </select>
     </div>`;
 }
@@ -252,25 +311,25 @@ function entitySelect(selectedEntityId) {
 export function showAddTaskModal(preSelectedEntityId, renderFn) {
   openModal(`
     <div class="modal-header">
-      <h3 class="modal-title">${t('modalAddTask')}</h3>
+      <h3 class="modal-title">${t("modalAddTask")}</h3>
       <button class="modal-close" data-action="close-modal">×</button>
     </div>
     <form class="form" id="task-form">
       <div class="form-group">
-        <label class="form-label" for="task-name">${t('fieldTaskName')}</label>
+        <label class="form-label" for="task-name">${t("fieldTaskName")}</label>
         <input class="form-input" id="task-name" name="name" type="text"
-          placeholder="${t('placeholderTask')}" required>
+          placeholder="${t("placeholderTask")}" required>
       </div>
       ${entitySelect(preSelectedEntityId)}
       <div class="form-group">
-        <label class="form-label">${t('fieldPriority')}</label>
+        <label class="form-label">${t("fieldPriority")}</label>
         <div class="priority-options">${priorityRadios(null)}</div>
       </div>
-      ${dueDateSection(null, null, null, null)}
+      ${dueDateSection(null, null, null, null, null, null)}
       ${assigneePicker([])}
       <div class="form-actions">
-        <button type="button" class="btn btn-ghost" data-action="close-modal">${t('btnCancel')}</button>
-        <button type="submit" class="btn btn-primary">${t('btnAddTask')}</button>
+        <button type="button" class="btn btn-ghost" data-action="close-modal">${t("btnCancel")}</button>
+        <button type="submit" class="btn btn-primary">${t("btnAddTask")}</button>
       </div>
     </form>`);
 
@@ -280,8 +339,13 @@ export function showAddTaskModal(preSelectedEntityId, renderFn) {
   document.getElementById("task-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(e.target));
-    const assigneeIds = [...e.target.querySelectorAll('[name="assigneeIds"]:checked')].map((cb) => cb.value);
+    const assigneeIds = [
+      ...e.target.querySelectorAll('[name="assigneeIds"]:checked'),
+    ].map((cb) => cb.value);
     const { repeatEvery, repeatFrequency } = buildRepeatCustom(d);
+    const earlyVal = d.earlyReminderValue
+      ? parseInt(d.earlyReminderValue, 10)
+      : null;
     const task = await api.createTask({
       name: d.name.trim(),
       entityId: d.entityId || null,
@@ -291,6 +355,8 @@ export function showAddTaskModal(preSelectedEntityId, renderFn) {
       repeat: buildRepeat(d),
       repeatEvery,
       repeatFrequency,
+      earlyReminderValue: earlyVal,
+      earlyReminderUnit: earlyVal ? d.earlyReminderUnit || "days" : null,
     });
     getState().tasks.unshift(task);
     closeModal();
@@ -309,25 +375,25 @@ export function showEditTaskModal(taskId, renderFn) {
 
   openModal(`
     <div class="modal-header">
-      <h3 class="modal-title">${t('modalEditTask')}</h3>
+      <h3 class="modal-title">${t("modalEditTask")}</h3>
       <button class="modal-close" data-action="close-modal">×</button>
     </div>
     <form class="form" id="task-form">
       <div class="form-group">
-        <label class="form-label" for="task-name">${t('fieldTaskName')}</label>
+        <label class="form-label" for="task-name">${t("fieldTaskName")}</label>
         <input class="form-input" id="task-name" name="name" type="text"
           value="${esc(task.name)}" required>
       </div>
       ${entitySelect(task.entityId)}
       <div class="form-group">
-        <label class="form-label">${t('fieldPriority')}</label>
+        <label class="form-label">${t("fieldPriority")}</label>
         <div class="priority-options">${priorityRadios(task.priority)}</div>
       </div>
-      ${dueDateSection(task.dueDate ?? null, task.repeat ?? null, task.repeatEvery ?? null, task.repeatFrequency ?? null)}
+      ${dueDateSection(task.dueDate ?? null, task.repeat ?? null, task.repeatEvery ?? null, task.repeatFrequency ?? null, task.earlyReminderValue ?? null, task.earlyReminderUnit ?? null)}
       ${assigneePicker(parseAssigneeIds(task.assigneeIds))}
       <div class="form-actions">
-        <button type="button" class="btn btn-ghost" data-action="close-modal">${t('btnCancel')}</button>
-        <button type="submit" class="btn btn-primary">${t('btnSaveChanges')}</button>
+        <button type="button" class="btn btn-ghost" data-action="close-modal">${t("btnCancel")}</button>
+        <button type="submit" class="btn btn-primary">${t("btnSaveChanges")}</button>
       </div>
     </form>`);
 
@@ -337,8 +403,13 @@ export function showEditTaskModal(taskId, renderFn) {
   document.getElementById("task-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(e.target));
-    const assigneeIds = [...e.target.querySelectorAll('[name="assigneeIds"]:checked')].map((cb) => cb.value);
+    const assigneeIds = [
+      ...e.target.querySelectorAll('[name="assigneeIds"]:checked'),
+    ].map((cb) => cb.value);
     const { repeatEvery, repeatFrequency } = buildRepeatCustom(d);
+    const earlyVal = d.earlyReminderValue
+      ? parseInt(d.earlyReminderValue, 10)
+      : null;
     const updates = {
       name: d.name.trim(),
       entityId: d.entityId || null,
@@ -348,6 +419,8 @@ export function showEditTaskModal(taskId, renderFn) {
       repeat: buildRepeat(d),
       repeatEvery,
       repeatFrequency,
+      earlyReminderValue: earlyVal,
+      earlyReminderUnit: earlyVal ? d.earlyReminderUnit || "days" : null,
     };
     Object.assign(task, updates);
     closeModal();
