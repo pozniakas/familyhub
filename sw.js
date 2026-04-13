@@ -81,18 +81,27 @@ self.addEventListener("push", (e) => {
       body: data.body,
       icon: "/icons/icon-192.png",
       badge: "/icons/icon-192.png",
+      data: { taskId: data.taskId },
     }),
   );
 });
 
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
+  const taskId = e.notification.data?.taskId;
+  const url = taskId ? `/#/tasks?edit=${taskId}` : "/";
   e.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
-        if (clients.length) return clients[0].focus();
-        return self.clients.openWindow("/");
+        if (clients.length) {
+          clients[0].focus();
+          clients[0].navigate
+            ? clients[0].navigate(url)
+            : clients[0].postMessage({ type: "navigate", url });
+          return;
+        }
+        return self.clients.openWindow(url);
       }),
   );
 });

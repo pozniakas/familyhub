@@ -1,6 +1,6 @@
-import { AppDataSource } from './data-source';
-import { Task } from './entity/Task';
-import { sendPushToTenant } from './routes/push';
+import { AppDataSource } from "./data-source";
+import { Task } from "./entity/Task";
+import { sendPushToTenant } from "./routes/push";
 
 /**
  * Parse a stored dueDate string into a JS Date in local server time.
@@ -11,7 +11,7 @@ import { sendPushToTenant } from './routes/push';
  * "local server time" matches the family's timezone.
  */
 function parseDue(dueDate: string): Date {
-  return new Date(dueDate.includes('T') ? dueDate : dueDate + 'T09:00:00');
+  return new Date(dueDate.includes("T") ? dueDate : dueDate + "T09:00:00");
 }
 
 /**
@@ -22,11 +22,19 @@ function parseDue(dueDate: string): Date {
 function calcEarlyTime(dueTime: Date, value: number, unit: string): Date {
   const d = new Date(dueTime);
   switch (unit) {
-    case 'minutes': d.setMinutes(d.getMinutes() - value); break;
-    case 'hours':   d.setHours(d.getHours() - value);    break;
-    case 'days':    d.setDate(d.getDate() - value);       break;
-    case 'weeks':   d.setDate(d.getDate() - value * 7);   break;
-    case 'months': {
+    case "minutes":
+      d.setMinutes(d.getMinutes() - value);
+      break;
+    case "hours":
+      d.setHours(d.getHours() - value);
+      break;
+    case "days":
+      d.setDate(d.getDate() - value);
+      break;
+    case "weeks":
+      d.setDate(d.getDate() - value * 7);
+      break;
+    case "months": {
       const day = d.getDate();
       d.setDate(1);
       d.setMonth(d.getMonth() - value);
@@ -39,21 +47,27 @@ function calcEarlyTime(dueTime: Date, value: number, unit: string): Date {
 }
 
 function unitLabel(value: number, unit: string): string {
-  const s = value !== 1 ? 's' : '';
+  const s = value !== 1 ? "s" : "";
   switch (unit) {
-    case 'minutes': return `minute${s}`;
-    case 'hours':   return `hour${s}`;
-    case 'days':    return `day${s}`;
-    case 'weeks':   return `week${s}`;
-    case 'months':  return `month${s}`;
-    default:        return unit;
+    case "minutes":
+      return `minute${s}`;
+    case "hours":
+      return `hour${s}`;
+    case "days":
+      return `day${s}`;
+    case "weeks":
+      return `week${s}`;
+    case "months":
+      return `month${s}`;
+    default:
+      return unit;
   }
 }
 
 const OVERDUE_TIERS = [
-  { ms: 24 * 3600_000,     body: '1 day overdue' },
-  { ms: 48 * 3600_000,     body: '2 days overdue' },
-  { ms: 7 * 24 * 3600_000, body: 'Over a week overdue · last reminder' },
+  { ms: 24 * 3600_000, body: "1 day overdue" },
+  { ms: 48 * 3600_000, body: "2 days overdue" },
+  { ms: 7 * 24 * 3600_000, body: "Over a week overdue · last reminder" },
 ];
 
 let running = false;
@@ -76,12 +90,22 @@ async function tick(): Promise<void> {
       // Bug #1 fix: only fire while the task is not yet due (now < dueTime).
       // If the server was down over the due time, skip the early reminder —
       // the "Due now" notification is more relevant at that point.
-      if (task.earlyReminderValue && task.earlyReminderUnit && !task.earlyReminderSentAt && now < dueTime) {
-        const earlyTime = calcEarlyTime(dueTime, task.earlyReminderValue, task.earlyReminderUnit);
+      if (
+        task.earlyReminderValue &&
+        task.earlyReminderUnit &&
+        !task.earlyReminderSentAt &&
+        now < dueTime
+      ) {
+        const earlyTime = calcEarlyTime(
+          dueTime,
+          task.earlyReminderValue,
+          task.earlyReminderUnit,
+        );
         if (now >= earlyTime) {
           await sendPushToTenant(task.tenantId, {
             title: task.name,
             body: `Due in ${task.earlyReminderValue} ${unitLabel(task.earlyReminderValue, task.earlyReminderUnit)}`,
+            taskId: task.id,
           });
           await repo.update(task.id, { earlyReminderSentAt: now });
         }
@@ -91,7 +115,8 @@ async function tick(): Promise<void> {
       if (!task.reminderSentAt && now >= dueTime) {
         await sendPushToTenant(task.tenantId, {
           title: task.name,
-          body: 'Due now',
+          body: "Due now",
+          taskId: task.id,
         });
         await repo.update(task.id, { reminderSentAt: now });
         // NOTE: task.reminderSentAt is intentionally NOT updated in memory here.
@@ -112,20 +137,21 @@ async function tick(): Promise<void> {
           await sendPushToTenant(task.tenantId, {
             title: task.name,
             body: tier.body,
+            taskId: task.id,
           });
           await repo.update(task.id, { overdueCount: count + 1 });
         }
       }
     }
   } catch (err) {
-    console.error('[scheduler] tick error:', err);
+    console.error("[scheduler] tick error:", err);
   } finally {
     running = false;
   }
 }
 
 export function startScheduler(): void {
-  setTimeout(() => tick(), 10_000);          // first run 10 s after startup
-  setInterval(() => tick(), 60_000);         // then every 60 s
-  console.log('[scheduler] started (60 s interval)');
+  setTimeout(() => tick(), 10_000); // first run 10 s after startup
+  setInterval(() => tick(), 60_000); // then every 60 s
+  console.log("[scheduler] started (60 s interval)");
 }

@@ -22,6 +22,20 @@ import { closeModal } from "./modal.js";
 import { api } from "./api.js";
 import { isLoggedIn, setAuth, clearAuth } from "./auth.js";
 import { getPushState, subscribePush, unsubscribePush } from "./push.js";
+import { showEditTaskModal } from "./modals/tasks.js";
+
+/** Open edit modal for a task ID passed as ?edit=<id> in the URL, then clean the param. */
+function checkDeepLink() {
+  if (!isLoggedIn()) return;
+  const params = new URLSearchParams(window.location.search);
+  const taskId = params.get("edit");
+  if (!taskId) return;
+  // Remove the param without adding a history entry
+  const cleanUrl = window.location.pathname + window.location.hash;
+  history.replaceState(null, "", cleanUrl);
+  // Wait one microtask so the view is fully rendered before opening the modal
+  Promise.resolve().then(() => showEditTaskModal(taskId, render));
+}
 
 async function init() {
   const viewEl = document.getElementById("view");
@@ -155,8 +169,21 @@ async function init() {
   });
 
   render();
-  window.addEventListener("hashchange", render);
+  checkDeepLink();
+  window.addEventListener("hashchange", () => {
+    render();
+    checkDeepLink();
+  });
   wireViewEvents(viewEl, updatePushButton);
+
+  // Handle navigate messages from the service worker (notificationclick)
+  navigator.serviceWorker?.addEventListener("message", (e) => {
+    if (e.data?.type === "navigate") {
+      window.location.hash = new URL(e.data.url, location.origin).hash;
+      render();
+      checkDeepLink();
+    }
+  });
 }
 
 function wireViewEvents(viewEl, updatePushButton) {
@@ -187,6 +214,7 @@ function wireViewEvents(viewEl, updatePushButton) {
       console.error("Failed to load state after login:", err);
     }
     render();
+    checkDeepLink();
   });
 
   // All view interactions use event delegation

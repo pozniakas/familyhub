@@ -83,6 +83,7 @@ router.post(
         {
           title: task.name,
           body: `Added by ${username}`,
+          taskId: task.id,
         },
         creatorId,
       ).catch((err) =>
