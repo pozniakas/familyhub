@@ -27,11 +27,16 @@ import { showEditTaskModal } from "./modals/tasks.js";
 // Register the SW message listener at the top level — before init() runs —
 // so notifications received while the app is already open are never missed.
 if (navigator.serviceWorker) {
-  navigator.serviceWorker.addEventListener("message", (e) => {
+  navigator.serviceWorker.addEventListener("message", async (e) => {
     if (e.data?.type === "open-task") {
-      showEditTaskModal(e.data.taskId, () => {
-        import("./render.js").then(({ render }) => render());
-      });
+      const { render } = await import("./render.js");
+      // Reload state first — the task may not be in memory yet (e.g. it was
+      // just created, or this is a recurring task that was auto-generated).
+      try {
+        await loadState();
+      } catch {}
+      render();
+      showEditTaskModal(e.data.taskId, render);
     }
   });
 }
