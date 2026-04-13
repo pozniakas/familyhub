@@ -161,8 +161,8 @@ router.post(
     const user = await userRepo().findOne({ where: { id: req.params.id } });
     if (!user) return void res.status(404).json({ error: 'User not found' });
     const result = await sendPushToUser(user.id, {
-      title: 'FamilyHub',
-      body: `Test notification for ${user.username}`,
+      title: `Test notification for ${user.username}`,
+      body: 'Push notifications are working correctly.',
     });
     res.json(result);
   }),
