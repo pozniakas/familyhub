@@ -176,12 +176,13 @@ async function init() {
   });
   wireViewEvents(viewEl, updatePushButton);
 
-  // Handle navigate messages from the service worker (notificationclick)
+  // Handle messages from the service worker (notificationclick while app is open)
   navigator.serviceWorker?.addEventListener("message", (e) => {
-    if (e.data?.type === "navigate") {
-      window.location.hash = new URL(e.data.url, location.origin).hash;
+    if (e.data?.type === "open-task") {
+      // Navigate to tasks view first, then open the edit modal
+      window.location.hash = "#/tasks";
       render();
-      checkDeepLink();
+      Promise.resolve().then(() => showEditTaskModal(e.data.taskId, render));
     }
   });
 }

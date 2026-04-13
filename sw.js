@@ -89,18 +89,20 @@ self.addEventListener("push", (e) => {
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   const taskId = e.notification.data?.taskId;
-  const url = taskId ? `/#/tasks?edit=${taskId}` : "/";
   e.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
         if (clients.length) {
+          // App is open — focus it and tell it which task to open.
+          // postMessage is used instead of navigate() to avoid a full page reload.
           clients[0].focus();
-          clients[0].navigate
-            ? clients[0].navigate(url)
-            : clients[0].postMessage({ type: "navigate", url });
+          if (taskId) clients[0].postMessage({ type: "open-task", taskId });
           return;
         }
+        // App is closed — open it. Put edit param before the hash so the
+        // router still sees a clean #/tasks path.
+        const url = taskId ? `/?edit=${taskId}#/tasks` : "/";
         return self.clients.openWindow(url);
       }),
   );
