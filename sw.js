@@ -94,14 +94,16 @@ self.addEventListener("notificationclick", (e) => {
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
         if (clients.length) {
-          // App is open — focus it and tell it which task to open.
-          // postMessage is used instead of navigate() to avoid a full page reload.
-          clients[0].focus();
-          if (taskId) clients[0].postMessage({ type: "open-task", taskId });
+          // App is open — focus and message every window client.
+          // Use includeUncontrolled so we catch the PWA window even when
+          // the SW update cycle means it isn't the "controller" yet.
+          clients.forEach((c) => {
+            c.focus();
+            if (taskId) c.postMessage({ type: "open-task", taskId });
+          });
           return;
         }
-        // App is closed — open it. Encode the edit param in the hash so
-        // the router still sees a clean path (it strips ?query from hash before matching).
+        // App is closed — open it with the task id encoded in the hash.
         const url = taskId ? `/#/tasks?edit=${taskId}` : "/";
         return self.clients.openWindow(url);
       }),

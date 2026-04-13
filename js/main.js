@@ -24,6 +24,18 @@ import { isLoggedIn, setAuth, clearAuth } from "./auth.js";
 import { getPushState, subscribePush, unsubscribePush } from "./push.js";
 import { showEditTaskModal } from "./modals/tasks.js";
 
+// Register the SW message listener at the top level — before init() runs —
+// so notifications received while the app is already open are never missed.
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.addEventListener("message", (e) => {
+    if (e.data?.type === "open-task") {
+      showEditTaskModal(e.data.taskId, () => {
+        import("./render.js").then(({ render }) => render());
+      });
+    }
+  });
+}
+
 /** Open edit modal for a task ID encoded in the hash as ?edit=<id>, then clean it. */
 function checkDeepLink() {
   if (!isLoggedIn()) return;
@@ -175,15 +187,6 @@ async function init() {
     checkDeepLink();
   });
   wireViewEvents(viewEl, updatePushButton);
-
-  // Handle messages from the service worker (notificationclick while app is open)
-  navigator.serviceWorker?.addEventListener("message", (e) => {
-    if (e.data?.type === "open-task") {
-      // Just open the modal on top of whatever view is showing.
-      // No hash change needed — avoids triggering a re-render race.
-      Promise.resolve().then(() => showEditTaskModal(e.data.taskId, render));
-    }
-  });
 }
 
 function wireViewEvents(viewEl, updatePushButton) {
