@@ -24,16 +24,16 @@ import { isLoggedIn, setAuth, clearAuth } from "./auth.js";
 import { getPushState, subscribePush, unsubscribePush } from "./push.js";
 import { showEditTaskModal } from "./modals/tasks.js";
 
-/** Open edit modal for a task ID passed as ?edit=<id> in the URL, then clean the param. */
+/** Open edit modal for a task ID encoded in the hash as ?edit=<id>, then clean it. */
 function checkDeepLink() {
   if (!isLoggedIn()) return;
-  const params = new URLSearchParams(window.location.search);
-  const taskId = params.get("edit");
+  // Read edit param from the hash query string: #/tasks?edit=<id>
+  const hashQuery = window.location.hash.split("?")[1] || "";
+  const taskId = new URLSearchParams(hashQuery).get("edit");
   if (!taskId) return;
-  // Remove the param without adding a history entry
-  const cleanUrl = window.location.pathname + window.location.hash;
-  history.replaceState(null, "", cleanUrl);
-  // Wait one microtask so the view is fully rendered before opening the modal
+  // Strip the query from the hash without adding a history entry
+  const cleanHash = window.location.hash.split("?")[0];
+  history.replaceState(null, "", window.location.pathname + cleanHash);
   Promise.resolve().then(() => showEditTaskModal(taskId, render));
 }
 
@@ -179,9 +179,8 @@ async function init() {
   // Handle messages from the service worker (notificationclick while app is open)
   navigator.serviceWorker?.addEventListener("message", (e) => {
     if (e.data?.type === "open-task") {
-      // Navigate to tasks view first, then open the edit modal
-      window.location.hash = "#/tasks";
-      render();
+      // Just open the modal on top of whatever view is showing.
+      // No hash change needed — avoids triggering a re-render race.
       Promise.resolve().then(() => showEditTaskModal(e.data.taskId, render));
     }
   });

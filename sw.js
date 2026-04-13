@@ -100,9 +100,9 @@ self.addEventListener("notificationclick", (e) => {
           if (taskId) clients[0].postMessage({ type: "open-task", taskId });
           return;
         }
-        // App is closed — open it. Put edit param before the hash so the
-        // router still sees a clean #/tasks path.
-        const url = taskId ? `/?edit=${taskId}#/tasks` : "/";
+        // App is closed — open it. Encode the edit param in the hash so
+        // the router still sees a clean path (it strips ?query from hash before matching).
+        const url = taskId ? `/#/tasks?edit=${taskId}` : "/";
         return self.clients.openWindow(url);
       }),
   );
